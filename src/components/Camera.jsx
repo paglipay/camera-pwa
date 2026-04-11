@@ -102,22 +102,22 @@ export function Camera({ onCapture }) {
       </div>
 
       <div className="capture-buttons">
-        {/* Camera button — behaviour changes based on exifMode */}
-        <label className="btn-capture" htmlFor="native-camera" aria-label="Take photo">
+        {/* Camera button — behaviour changes based on exifMode; accepts photos and videos */}
+        <label className="btn-capture" htmlFor="native-camera" aria-label="Take photo or video">
           <CameraIcon />
-          Take Photo
+          Capture
         </label>
         <input
           id="native-camera"
           ref={cameraInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,video/*"
           capture="environment"
           onChange={handleFile}
           style={{ display: 'none' }}
         />
 
-        {/* Opens photo gallery / file picker */}
+        {/* Opens gallery / file picker for photos and videos */}
         <label className="btn-capture btn-capture--secondary" htmlFor="gallery-pick" aria-label="Choose from gallery">
           <GalleryIcon />
           Gallery
@@ -126,7 +126,7 @@ export function Camera({ onCapture }) {
           id="gallery-pick"
           ref={galleryInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,video/*"
           onChange={handleFile}
           style={{ display: 'none' }}
         />

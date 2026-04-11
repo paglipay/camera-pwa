@@ -46,10 +46,12 @@ export function ImageQueue({ items, onRetry, onRemove, onClearDone }) {
 
 function QueueItem({ item, onRetry, onRemove }) {
   const [src, setSrc] = useState(null);
+  const [isVideo, setIsVideo] = useState(false);
 
   useEffect(() => {
     const url = URL.createObjectURL(item.blob);
     setSrc(url);
+    setIsVideo(item.blob.type.startsWith('video/'));
     return () => URL.revokeObjectURL(url);
   }, [item.blob]);
 
@@ -58,7 +60,11 @@ function QueueItem({ item, onRetry, onRemove }) {
   return (
     <li className={`queue-item status-${item.status}`} aria-label={item.fileName}>
       <div className="qi-thumb">
-        {src && <img src={src} alt="" loading="lazy" />}
+        {src && isVideo ? (
+          <video src={src} controls={false} muted />
+        ) : (
+          src && <img src={src} alt="" loading="lazy" />
+        )}
       </div>
 
       <div className="qi-info">
