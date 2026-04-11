@@ -47,9 +47,9 @@ export function useQueue(isOnline) {
         try {
           const result = await uploadImage(item);
           console.log('[queue] item done →', { id: item.id, result });
-          await dbUpdate(item.id, { status: 'done', error: null });
+          await dbUpdate(item.id, { status: 'done' });
           setItems(prev =>
-            prev.map(i => i.id === item.id ? { ...i, status: 'done', error: null } : i)
+            prev.map(i => i.id === item.id ? { ...i, status: 'done' } : i)
           );
         } catch (err) {
           const retries   = (item.retries ?? 0) + 1;
@@ -73,13 +73,13 @@ export function useQueue(isOnline) {
   }, []);
 
   // ── Add a captured image to the queue ───────────────────────────────────
-  const addImage = useCallback(async (blob, fileName) => {
-    const id = await dbAdd(blob, fileName);
+  const addImage = useCallback(async (blob, fileName, coords = null) => {
+    const id = await dbAdd(blob, fileName, coords);
     setItems(prev => [
       ...prev,
-      { id, blob, fileName, status: 'pending', timestamp: Date.now(), retries: 0, error: null },
+      { id, blob, fileName, status: 'pending', timestamp: Date.now(), retries: 0, error: null, lat: coords?.lat ?? null, lon: coords?.lon ?? null },
     ]);
-    console.log('[queue] addImage →', { fileName, online: isOnlineRef.current });
+    console.log('[queue] addImage →', { fileName, coords, online: isOnlineRef.current });
     if (isOnlineRef.current) {
       processQueue();
     } else {

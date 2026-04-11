@@ -23,7 +23,7 @@ function openDB() {
   });
 }
 
-export async function dbAdd(blob, fileName) {
+export async function dbAdd(blob, fileName, coords = null) {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx  = db.transaction(STORE, 'readwrite');
@@ -34,6 +34,8 @@ export async function dbAdd(blob, fileName) {
       timestamp: Date.now(),
       retries:   0,
       error:     null,
+      lat:       coords?.lat ?? null,
+      lon:       coords?.lon ?? null,
     });
     req.onsuccess = () => resolve(req.result); // returns auto-generated id
     req.onerror   = () => reject(req.error);

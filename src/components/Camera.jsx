@@ -1,21 +1,108 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useState } from 'react';
+
+const EXIF_MODE_KEY = 'camera-pwa:exif-mode';
+
+/** Resolve with { lat, lon } or null within `timeoutMs`. Never throws. */
+function getCoords(timeoutMs = 8000) {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) {
+      console.log('[camera] geolocation API not available');
+      resolve(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      console.warn('[camera] geolocation timed out');
+      resolve(null);
+    }, timeoutMs);
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        clearTimeout(timer);
+        const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        console.log('[camera] geolocation success →', coords);
+        resolve(coords);
+      },
+      err => {
+        clearTimeout(timer);
+        console.warn('[camera] geolocation error →', err.message);
+        resolve(null);
+      },
+      { enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 30_000 }
+    );
+  });
+}
 
 export function Camera({ onCapture }) {
   const cameraInputRef  = useRef(null);
   const galleryInputRef = useRef(null);
 
-  const handleFile = useCallback(e => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onCapture(file, file.name);
-      e.target.value = '';
+  // When exifMode is true the camera button opens the file picker (no `capture`
+  // attribute) so the user picks an already-saved photo which retains EXIF data.
+  const [exifMode, setExifMode] = useState(
+    () => localStorage.getItem(EXIF_MODE_KEY) === 'true'
+  );
+
+  const toggleExifMode = useCallback(() => {
+    setExifMode(prev => {
+      const next = !prev;
+      localStorage.setItem(EXIF_MODE_KEY, String(next));
+      return next;
+    });
+  }, []);
+
+  const saveLocally = useCallback(async (file) => {
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: file.name });
+        return;
+      } catch (err) {
+        // User cancelled or share failed — fall through to download
+        if (err.name === 'AbortError') return;
+        console.warn('[camera] share failed, falling back to download →', err.message);
+      }
     }
-  }, [onCapture]);
+    // Fallback: programmatic download (saves to Downloads on Android/desktop)
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const handleFile = useCallback(async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    const coords = await getCoords();
+    if (exifMode) await saveLocally(file);
+    onCapture(file, file.name, coords);
+  }, [exifMode, onCapture, saveLocally]);
 
   return (
     <div className="camera-container">
+      <div className="exif-toggle-row">
+        <label className="exif-toggle-label" htmlFor="exif-toggle">
+          <span className="exif-toggle-text">
+            {exifMode ? 'Capture + save to device' : 'Upload only'}
+          </span>
+          <span className="exif-toggle-hint">
+            {exifMode
+              ? 'Photo is captured and also saved to your device storage'
+              : 'Photo is captured and uploaded without saving to device'}
+          </span>
+        </label>
+        <button
+          id="exif-toggle"
+          role="switch"
+          aria-checked={exifMode}
+          className={`toggle-switch${exifMode ? ' toggle-switch--on' : ''}`}
+          onClick={toggleExifMode}
+          aria-label="Toggle EXIF mode"
+        />
+      </div>
+
       <div className="capture-buttons">
-        {/* Opens native Android/iOS camera app */}
+        {/* Camera button — behaviour changes based on exifMode */}
         <label className="btn-capture" htmlFor="native-camera" aria-label="Take photo">
           <CameraIcon />
           Take Photo
