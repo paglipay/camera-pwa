@@ -94,7 +94,9 @@ async function handleBackgroundSync() {
 // ─── Inline DB helpers (SW context) ──────────────────────────────────────────
 const SW_DB_NAME = 'camera-pwa';
 const SW_STORE   = 'images';
-const UPLOAD_URL = '/api/upload'; // mirrors VITE_UPLOAD_URL default
+// Mirror VITE_UPLOAD_URL — update this if you change the env var
+const UPLOAD_URL = self.UPLOAD_URL || '/files/upload';
+const API_KEY    = self.UPLOAD_API_KEY || '';
 
 function swOpenDB() {
   return new Promise((resolve, reject) => {
@@ -119,10 +121,12 @@ async function processQueueInSW() {
   for (const item of pending) {
     try {
       const body = new FormData();
-      body.append('image', item.blob, item.fileName);
-      body.append('timestamp', String(item.timestamp));
+      body.append('file', item.blob, item.fileName);
 
-      const res = await fetch(UPLOAD_URL, { method: 'POST', body });
+      const headers = {};
+      if (API_KEY) headers['X-API-Key'] = API_KEY;
+
+      const res = await fetch(UPLOAD_URL, { method: 'POST', body, headers });
 
       if (res.ok) {
         await swUpdateItem(db, item.id, { status: 'done' });

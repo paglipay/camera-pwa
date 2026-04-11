@@ -1,21 +1,34 @@
-const UPLOAD_URL = import.meta.env.VITE_UPLOAD_URL || '/api/upload';
+const UPLOAD_URL = import.meta.env.VITE_UPLOAD_URL || '/files/upload';
+const API_KEY     = import.meta.env.VITE_UPLOAD_API_KEY || '';
+const FOLDER      = import.meta.env.VITE_UPLOAD_FOLDER || '';
 
 /**
- * Upload a single queued image item via multipart POST.
- * Throws on network error or non-2xx response.
+ * Upload a single queued image item to the Flask /files/upload endpoint.
+ * Throws on network error, non-2xx response, or Flask error payload.
  */
 export async function uploadImage(item) {
   const body = new FormData();
-  body.append('image',     item.blob, item.fileName);
-  body.append('timestamp', String(item.timestamp));
+  // Flask expects the field named 'file'
+  body.append('file', item.blob, item.fileName);
+  if (FOLDER) body.append('folder', FOLDER);
 
-  const res = await fetch(UPLOAD_URL, { method: 'POST', body });
+  const headers = {};
+  if (API_KEY) headers['X-API-Key'] = API_KEY;
+
+  const res = await fetch(UPLOAD_URL, { method: 'POST', body, headers });
+
+  const contentType = res.headers.get('content-type') ?? '';
+  const json = contentType.includes('application/json') ? await res.json() : null;
 
   if (!res.ok) {
-    throw new Error(`Upload failed — ${res.status} ${res.statusText}`);
+    const msg = json?.message ?? `${res.status} ${res.statusText}`;
+    throw new Error(`Upload failed — ${msg}`);
   }
 
-  // Return parsed JSON if the server sends it, otherwise null
-  const contentType = res.headers.get('content-type') ?? '';
-  return contentType.includes('application/json') ? res.json() : null;
+  // Flask returns { status, filename, path, size_bytes, download_url }
+  if (json?.status === 'error') {
+    throw new Error(`Upload failed — ${json.message ?? 'unknown error'}`);
+  }
+
+  return json;
 }
