@@ -19,13 +19,16 @@ export default function App() {
     return next;
   });
 
+  const clearDoneRef = useRef(clearDone);
+  useEffect(() => { clearDoneRef.current = clearDone; }, [clearDone]);
+
   const wasProcessingRef = useRef(false);
   useEffect(() => {
     if (wasProcessingRef.current && !isProcessing && autoClear) {
-      clearDone();
+      clearDoneRef.current();
     }
     wasProcessingRef.current = isProcessing;
-  }, [isProcessing, autoClear, clearDone]);
+  }, [isProcessing, autoClear]);
 
   const pendingCount = items.filter(i => i.status === 'pending' || i.status === 'uploading').length;
 
@@ -39,13 +42,19 @@ export default function App() {
 
       <main className="main">
         <Camera onCapture={addImage} />
+        <label className="auto-clear-label">
+          <input
+            type="checkbox"
+            checked={autoClear}
+            onChange={toggleAutoClear}
+          />
+          Auto-clear uploaded photos
+        </label>
         <ImageQueue
           items={items}
           onRetry={retryItem}
           onRemove={removeItem}
           onClearDone={clearDone}
-          autoClear={autoClear}
-          onToggleAutoClear={toggleAutoClear}
         />
       </main>
     </div>

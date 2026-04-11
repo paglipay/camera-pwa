@@ -7,7 +7,7 @@ const STATUS_LABEL = {
   failed:    'Failed',
 };
 
-export function ImageQueue({ items, onRetry, onRemove, onClearDone, autoClear, onToggleAutoClear }) {
+export function ImageQueue({ items, onRetry, onRemove, onClearDone }) {
   if (items.length === 0) return null;
 
   const counts = items.reduce((acc, i) => ({ ...acc, [i.status]: (acc[i.status] ?? 0) + 1 }), {});
@@ -28,17 +28,7 @@ export function ImageQueue({ items, onRetry, onRemove, onClearDone, autoClear, o
           {counts.failed    > 0 && <span className="badge badge-failed">{counts.failed} failed</span>}
         </div>
 
-        <label className="auto-clear-label">
-          <input
-            type="checkbox"
-            checked={autoClear}
-            onChange={onToggleAutoClear}
-            aria-label="Auto-clear uploaded photos"
-          />
-          Auto-clear
-        </label>
-
-        {hasDone && !autoClear && (
+        {hasDone && (
           <button className="btn-text" onClick={onClearDone} aria-label="Clear uploaded photos">
             Clear done
           </button>
