@@ -111,7 +111,7 @@ export function Camera({ onCapture }) {
           id="native-camera"
           ref={cameraInputRef}
           type="file"
-          accept="image/*,video/*"
+          accept="image/*"
           capture="environment"
           onChange={handleFile}
           style={{ display: 'none' }}
