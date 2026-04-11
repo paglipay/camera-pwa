@@ -1,79 +1,65 @@
 import express from 'express';
-import Busboy from 'busboy';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createWriteStream } from 'fs';
-import { mkdir } from 'fs/promises';
+import { createRequire } from 'module';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+// ── Flask upstream URL — set FLASK_UPLOAD_URL in Heroku config vars ───────
+const FLASK_URL = (process.env.FLASK_UPLOAD_URL || '').replace(/\/$/, '');
+
 // ── Static assets (built by vite build / heroku-postbuild) ───────────────
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// ── Upload endpoint ───────────────────────────────────────────────────────
-// Replace this section with your real storage logic (S3, database, etc.)
-//
-// The incoming multipart/form-data has:
-//   image     — the image file (Blob)
-//   timestamp — capture timestamp (ms string)
-//
-// Using busboy for streaming multipart parsing (no temp files kept in memory).
-
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
-await mkdir(UPLOADS_DIR, { recursive: true });
-
-app.post('/api/upload', (req, res) => {
-  const contentType = req.headers['content-type'] ?? '';
-  if (!contentType.includes('multipart/form-data')) {
-    return res.status(400).json({ error: 'Expected multipart/form-data' });
+// ── Proxy /files/* → Flask server ────────────────────────────────────────
+// This avoids CORS issues: the browser talks to the same Heroku origin and
+// the server forwards the request to Flask.
+app.use('/files', async (req, res) => {
+  if (!FLASK_URL) {
+    return res.status(503).json({ status: 'error', message: 'FLASK_UPLOAD_URL is not configured on this server.' });
   }
 
-  let fileName  = `upload-${Date.now()}.jpg`;
-  let timestamp = null;
-  let saved     = false;
+  const targetURL = `${FLASK_URL}/files${req.url}`;
 
-  const busboy = Busboy({ headers: req.headers, limits: { fileSize: 20 * 1024 * 1024 } });
+  // Forward relevant headers; pass through X-API-Key if present
+  const forwardHeaders = {};
+  for (const [key, value] of Object.entries(req.headers)) {
+    // Strip hop-by-hop headers
+    if (['host', 'connection', 'transfer-encoding', 'te', 'upgrade', 'keep-alive'].includes(key.toLowerCase())) continue;
+    forwardHeaders[key] = value;
+  }
 
-  busboy.on('field', (name, value) => {
-    if (name === 'timestamp') timestamp = value;
-  });
+  try {
+    const { default: fetch } = await import('node-fetch');
 
-  busboy.on('file', (_field, fileStream, info) => {
-    // Sanitise the client-supplied filename
-    const safeName = path.basename(info.filename || fileName).replace(/[^a-zA-Z0-9._-]/g, '_');
-    fileName = `${Date.now()}-${safeName}`;
-    const dest = path.join(UPLOADS_DIR, fileName);
-    const write = createWriteStream(dest);
-    fileStream.pipe(write);
-    write.on('finish', () => { saved = true; });
-    write.on('error', err => {
-      console.error('Write error:', err);
-      if (!res.headersSent) res.status(500).json({ error: 'File write failed' });
+    const upstream = await fetch(targetURL, {
+      method:  req.method,
+      headers: forwardHeaders,
+      body:    ['GET', 'HEAD'].includes(req.method.toUpperCase()) ? undefined : req,
+      // Allow req stream to be used as body (node-fetch supports Node streams)
+      compress: false,
     });
-  });
 
-  busboy.on('finish', () => {
-    if (!res.headersSent) {
-      if (saved) {
-        res.status(200).json({ ok: true, fileName, timestamp });
-      } else {
-        res.status(400).json({ error: 'No file received' });
-      }
+    res.status(upstream.status);
+    // Forward response headers (skip hop-by-hop)
+    for (const [key, value] of upstream.headers.entries()) {
+      if (['transfer-encoding', 'connection'].includes(key.toLowerCase())) continue;
+      res.setHeader(key, value);
     }
-  });
 
-  busboy.on('error', err => {
-    console.error('Busboy error:', err);
-    if (!res.headersSent) res.status(500).json({ error: 'Upload processing failed' });
-  });
-
-  req.pipe(busboy);
+    upstream.body.pipe(res);
+  } catch (err) {
+    console.error('Proxy error:', err.message);
+    if (!res.headersSent) {
+      res.status(502).json({ status: 'error', message: 'Could not reach Flask server.' });
+    }
+  }
 });
 
-// ── SPA fallback — must come after /api routes ────────────────────────────
+// ── SPA fallback — must come after /files proxy ───────────────────────────
 app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
@@ -81,4 +67,9 @@ app.get('*', (_req, res) => {
 // ── Start ─────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`Camera PWA listening on port ${PORT}`);
+  if (FLASK_URL) {
+    console.log(`Proxying /files/* → ${FLASK_URL}/files/*`);
+  } else {
+    console.warn('WARNING: FLASK_UPLOAD_URL is not set — /files/* requests will return 503');
+  }
 });
