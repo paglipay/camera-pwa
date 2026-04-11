@@ -73,23 +73,22 @@ export function Camera({ onCapture }) {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = '';
-    // Grab location in parallel — browser strips GPS from the File object
     const coords = await getCoords();
-    if (saveLocally) await saveLocally(file);
+    if (exifMode) await saveLocally(file);
     onCapture(file, file.name, coords);
-  }, [onCapture, saveLocally]);
+  }, [exifMode, onCapture, saveLocally]);
 
   return (
     <div className="camera-container">
       <div className="exif-toggle-row">
         <label className="exif-toggle-label" htmlFor="exif-toggle">
           <span className="exif-toggle-text">
-            {exifMode ? 'Save to gallery first (EXIF preserved)' : 'Direct capture (EXIF stripped)'}
+            {exifMode ? 'Capture + save to device' : 'Upload only'}
           </span>
           <span className="exif-toggle-hint">
             {exifMode
-              ? 'Take photo with camera app → come back → tap camera button to select it'
-              : 'Instant capture — location added automatically instead'}
+              ? 'Photo is captured and also saved to your device storage'
+              : 'Photo is captured and uploaded without saving to device'}
           </span>
         </label>
         <button
@@ -106,14 +105,14 @@ export function Camera({ onCapture }) {
         {/* Camera button — behaviour changes based on exifMode */}
         <label className="btn-capture" htmlFor="native-camera" aria-label="Take photo">
           <CameraIcon />
-          {exifMode ? 'Select saved photo' : 'Take Photo'}
+          Take Photo
         </label>
         <input
           id="native-camera"
           ref={cameraInputRef}
           type="file"
           accept="image/*"
-          {...(exifMode ? {} : { capture: 'environment' })}
+          capture="environment"
           onChange={handleFile}
           style={{ display: 'none' }}
         />
