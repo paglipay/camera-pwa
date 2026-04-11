@@ -33,6 +33,7 @@ function getCoords(timeoutMs = 8000) {
 
 export function Camera({ onCapture }) {
   const cameraInputRef  = useRef(null);
+  const videoInputRef   = useRef(null);
   const galleryInputRef = useRef(null);
 
   // When exifMode is true the camera button opens the file picker (no `capture`
@@ -117,6 +118,21 @@ export function Camera({ onCapture }) {
           style={{ display: 'none' }}
         />
 
+        {/* Video button — opens native camera locked to video mode */}
+        <label className="btn-capture btn-capture--video" htmlFor="native-video" aria-label="Record video">
+          <VideoIcon />
+          Record
+        </label>
+        <input
+          id="native-video"
+          ref={videoInputRef}
+          type="file"
+          accept="video/*"
+          capture="environment"
+          onChange={handleFile}
+          style={{ display: 'none' }}
+        />
+
         {/* Opens gallery / file picker for photos and videos */}
         <label className="btn-capture btn-capture--secondary" htmlFor="gallery-pick" aria-label="Choose from gallery">
           <GalleryIcon />
@@ -143,6 +159,14 @@ function CameraIcon() {
       <path d="M12 15.2A3.2 3.2 0 1 1 12 8.8a3.2 3.2 0 0 1 0 6.4z"/>
       <path d="M9 3 7.17 5H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0
                2-2V7a2 2 0 0 0-2-2h-3.17L15 3H9zm3 14a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
+    </svg>
+  );
+}
+
+function VideoIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
     </svg>
   );
 }
