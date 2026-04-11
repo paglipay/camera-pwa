@@ -18,16 +18,25 @@ export function useQueue(isOnline) {
 
   // ── Process every pending item in order ─────────────────────────────────
   const processQueue = useCallback(async () => {
-    if (processingRef.current) return;
+    if (processingRef.current) {
+      console.log('[queue] processQueue called but already running — skipping');
+      return;
+    }
     processingRef.current = true;
     setProcessing(true);
 
     try {
       const all     = await dbGetAll();
       const pending = all.filter(i => i.status === 'pending');
+      console.log('[queue] processQueue start →', { online: isOnlineRef.current, pendingCount: pending.length, total: all.length });
 
       for (const item of pending) {
-        if (!isOnlineRef.current) break; // stop if we went offline mid-run
+        if (!isOnlineRef.current) {
+          console.warn('[queue] went offline mid-run — stopping');
+          break;
+        }
+
+        console.log('[queue] uploading item →', { id: item.id, fileName: item.fileName, retries: item.retries });
 
         // Optimistically mark as uploading in DB + state
         await dbUpdate(item.id, { status: 'uploading' });
@@ -36,7 +45,8 @@ export function useQueue(isOnline) {
         );
 
         try {
-          await uploadImage(item);
+          const result = await uploadImage(item);
+          console.log('[queue] item done →', { id: item.id, result });
           await dbUpdate(item.id, { status: 'done', error: null });
           setItems(prev =>
             prev.map(i => i.id === item.id ? { ...i, status: 'done', error: null } : i)
@@ -44,6 +54,7 @@ export function useQueue(isOnline) {
         } catch (err) {
           const retries   = (item.retries ?? 0) + 1;
           const newStatus = retries >= 3 ? 'failed' : 'pending';
+          console.error('[queue] item error →', { id: item.id, error: err.message, retries, newStatus });
           await dbUpdate(item.id, { status: newStatus, retries, error: err.message });
           setItems(prev =>
             prev.map(i =>
@@ -55,6 +66,7 @@ export function useQueue(isOnline) {
         }
       }
     } finally {
+      console.log('[queue] processQueue done');
       processingRef.current = false;
       setProcessing(false);
     }
@@ -67,9 +79,11 @@ export function useQueue(isOnline) {
       ...prev,
       { id, blob, fileName, status: 'pending', timestamp: Date.now(), retries: 0, error: null },
     ]);
+    console.log('[queue] addImage →', { fileName, online: isOnlineRef.current });
     if (isOnlineRef.current) {
       processQueue();
     } else {
+      console.log('[queue] offline — registering background sync');
       // Register background sync so SW can wake us up when online
       registerBackgroundSync();
     }
