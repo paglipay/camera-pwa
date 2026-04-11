@@ -42,14 +42,19 @@ export default function App() {
 
       <main className="main">
         <Camera onCapture={addImage} />
-        <label className="auto-clear-label">
-          <input
-            type="checkbox"
-            checked={autoClear}
-            onChange={toggleAutoClear}
+        <div className="exif-toggle-row">
+          <label className="exif-toggle-label" htmlFor="auto-clear-toggle">
+            <span className="exif-toggle-text">Auto-clear uploaded photos</span>
+          </label>
+          <button
+            id="auto-clear-toggle"
+            role="switch"
+            aria-checked={autoClear}
+            className={`toggle-switch${autoClear ? ' toggle-switch--on' : ''}`}
+            onClick={toggleAutoClear}
+            aria-label="Toggle auto-clear"
           />
-          Auto-clear uploaded photos
-        </label>
+        </div>
         <ImageQueue
           items={items}
           onRetry={retryItem}
