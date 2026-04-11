@@ -15,6 +15,9 @@ export async function uploadImage(item) {
   // Flask expects the field named 'file'
   body.append('file', item.blob, item.fileName);
   if (FOLDER) body.append('folder', FOLDER);
+  if (item.lat != null) body.append('lat', String(item.lat));
+  if (item.lon != null) body.append('lon', String(item.lon));
+  console.log('[upload] coordinates →', { lat: item.lat ?? 'none', lon: item.lon ?? 'none' });
 
   const headers = {};
   if (API_KEY) headers['X-API-Key'] = API_KEY;

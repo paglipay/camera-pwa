@@ -1,31 +1,98 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useState } from 'react';
+
+const EXIF_MODE_KEY = 'camera-pwa:exif-mode';
+
+/** Resolve with { lat, lon } or null within `timeoutMs`. Never throws. */
+function getCoords(timeoutMs = 8000) {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) {
+      console.log('[camera] geolocation API not available');
+      resolve(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      console.warn('[camera] geolocation timed out');
+      resolve(null);
+    }, timeoutMs);
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        clearTimeout(timer);
+        const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        console.log('[camera] geolocation success →', coords);
+        resolve(coords);
+      },
+      err => {
+        clearTimeout(timer);
+        console.warn('[camera] geolocation error →', err.message);
+        resolve(null);
+      },
+      { enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 30_000 }
+    );
+  });
+}
 
 export function Camera({ onCapture }) {
   const cameraInputRef  = useRef(null);
   const galleryInputRef = useRef(null);
 
-  const handleFile = useCallback(e => {
+  // When exifMode is true the camera button opens the file picker (no `capture`
+  // attribute) so the user picks an already-saved photo which retains EXIF data.
+  const [exifMode, setExifMode] = useState(
+    () => localStorage.getItem(EXIF_MODE_KEY) === 'true'
+  );
+
+  const toggleExifMode = useCallback(() => {
+    setExifMode(prev => {
+      const next = !prev;
+      localStorage.setItem(EXIF_MODE_KEY, String(next));
+      return next;
+    });
+  }, []);
+
+  const handleFile = useCallback(async e => {
     const file = e.target.files?.[0];
-    if (file) {
-      onCapture(file, file.name);
-      e.target.value = '';
-    }
+    if (!file) return;
+    e.target.value = '';
+    // Grab location in parallel — browser strips GPS from the File object
+    const coords = await getCoords();
+    onCapture(file, file.name, coords);
   }, [onCapture]);
 
   return (
     <div className="camera-container">
+      <div className="exif-toggle-row">
+        <label className="exif-toggle-label" htmlFor="exif-toggle">
+          <span className="exif-toggle-text">
+            {exifMode ? 'Save to gallery first (EXIF preserved)' : 'Direct capture (EXIF stripped)'}
+          </span>
+          <span className="exif-toggle-hint">
+            {exifMode
+              ? 'Take photo with camera app → come back → tap camera button to select it'
+              : 'Instant capture — location added automatically instead'}
+          </span>
+        </label>
+        <button
+          id="exif-toggle"
+          role="switch"
+          aria-checked={exifMode}
+          className={`toggle-switch${exifMode ? ' toggle-switch--on' : ''}`}
+          onClick={toggleExifMode}
+          aria-label="Toggle EXIF mode"
+        />
+      </div>
+
       <div className="capture-buttons">
-        {/* Opens native Android/iOS camera app */}
+        {/* Camera button — behaviour changes based on exifMode */}
         <label className="btn-capture" htmlFor="native-camera" aria-label="Take photo">
           <CameraIcon />
-          Take Photo
+          {exifMode ? 'Select saved photo' : 'Take Photo'}
         </label>
         <input
           id="native-camera"
           ref={cameraInputRef}
           type="file"
           accept="image/*"
-          capture="environment"
+          {...(exifMode ? {} : { capture: 'environment' })}
           onChange={handleFile}
           style={{ display: 'none' }}
         />
