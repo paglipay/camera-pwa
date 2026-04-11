@@ -47,10 +47,8 @@ export function useQueue(isOnline) {
         try {
           const result = await uploadImage(item);
           console.log('[queue] item done →', { id: item.id, result });
-          await dbUpdate(item.id, { status: 'done', error: null });
-          setItems(prev =>
-            prev.map(i => i.id === item.id ? { ...i, status: 'done', error: null } : i)
-          );
+          await dbDelete(item.id);
+          setItems(prev => prev.filter(i => i.id !== item.id));
         } catch (err) {
           const retries   = (item.retries ?? 0) + 1;
           const newStatus = retries >= 3 ? 'failed' : 'pending';

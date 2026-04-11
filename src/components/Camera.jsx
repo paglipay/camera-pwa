@@ -49,14 +49,35 @@ export function Camera({ onCapture }) {
     });
   }, []);
 
+  const saveLocally = useCallback(async (file) => {
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: file.name });
+        return;
+      } catch (err) {
+        // User cancelled or share failed — fall through to download
+        if (err.name === 'AbortError') return;
+        console.warn('[camera] share failed, falling back to download →', err.message);
+      }
+    }
+    // Fallback: programmatic download (saves to Downloads on Android/desktop)
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
   const handleFile = useCallback(async e => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = '';
     // Grab location in parallel — browser strips GPS from the File object
     const coords = await getCoords();
+    if (saveLocally) await saveLocally(file);
     onCapture(file, file.name, coords);
-  }, [onCapture]);
+  }, [onCapture, saveLocally]);
 
   return (
     <div className="camera-container">
