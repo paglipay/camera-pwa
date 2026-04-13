@@ -41,6 +41,7 @@ export function Camera({ onCapture }) {
   const [exifMode, setExifMode] = useState(
     () => localStorage.getItem(EXIF_MODE_KEY) === 'true'
   );
+  const [customName, setCustomName] = useState('');
 
   const toggleExifMode = useCallback(() => {
     setExifMode(prev => {
@@ -75,12 +76,34 @@ export function Camera({ onCapture }) {
     if (!file) return;
     e.target.value = '';
     const coords = await getCoords();
-    if (exifMode) await saveLocally(file);
-    onCapture(file, file.name, coords);
-  }, [exifMode, onCapture, saveLocally]);
+    const ext = file.name.includes('.')
+      ? '.' + file.name.split('.').pop()
+      : '';
+    const baseName = customName.trim();
+    const finalName = baseName ? baseName + ext : file.name;
+    const namedFile = new File([file], finalName, { type: file.type });
+    if (exifMode) await saveLocally(namedFile);
+    onCapture(namedFile, finalName, coords);
+  }, [customName, exifMode, onCapture, saveLocally]);
 
   return (
     <div className="camera-container">
+      <div className="filename-input-row">
+        <label className="filename-input-label" htmlFor="custom-filename">
+          File name
+          <span className="filename-input-hint">(optional — extension is kept automatically)</span>
+        </label>
+        <input
+          id="custom-filename"
+          type="text"
+          className="filename-input"
+          placeholder="e.g. site-photo"
+          value={customName}
+          onChange={e => setCustomName(e.target.value)}
+          autoComplete="off"
+          spellCheck={false}
+        />
+      </div>
       <div className="exif-toggle-row">
         <label className="exif-toggle-label" htmlFor="exif-toggle">
           <span className="exif-toggle-text">
