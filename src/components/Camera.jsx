@@ -44,6 +44,24 @@ export function Camera({ onCapture }) {
   );
   const [customName, setCustomName] = useState('');
 
+  // Tracks { baseName, count } to auto-suffix repeated names: 01 → 01 → 01A → 01B …
+  const nameCounterRef = useRef({ baseName: null, count: 0 });
+
+  const getNextName = useCallback((baseName) => {
+    if (!baseName) return baseName;
+    const { baseName: prev, count } = nameCounterRef.current;
+    if (prev !== baseName) {
+      nameCounterRef.current = { baseName, count: 1 };
+      return baseName; // first use — no suffix
+    }
+    // Same base name — append A, B, C …
+    const suffix = count <= 26
+      ? String.fromCharCode(64 + count) // 1→A, 2→B …
+      : String(count);                   // safety fallback beyond Z
+    nameCounterRef.current = { baseName, count: count + 1 };
+    return baseName + suffix;
+  }, []);
+
   // Naming modal state
   const [pendingCapture, setPendingCapture] = useState(null); // { file, coords, ext }
   const [modalName, setModalName]           = useState('');
@@ -95,21 +113,23 @@ export function Camera({ onCapture }) {
       return;
     }
 
-    const finalName  = baseName ? baseName + ext : file.name;
+    const resolvedName = getNextName(baseName);
+    const finalName  = resolvedName ? resolvedName + ext : file.name;
     const namedFile  = new File([file], finalName, { type: file.type });
     if (exifMode) await saveLocally(namedFile);
     onCapture(namedFile, finalName, coords);
-  }, [customName, exifMode, onCapture, saveLocally]);
+  }, [customName, exifMode, getNextName, onCapture, saveLocally]);
 
   const commitCapture = useCallback(async (name) => {
     if (!pendingCapture) return;
     const { file, coords, ext } = pendingCapture;
-    const finalName = name.trim() ? name.trim() + ext : file.name;
+    const resolvedName = getNextName(name.trim());
+    const finalName = resolvedName ? resolvedName + ext : file.name;
     const namedFile = new File([file], finalName, { type: file.type });
     setPendingCapture(null);
     if (exifMode) await saveLocally(namedFile);
     onCapture(namedFile, finalName, coords);
-  }, [pendingCapture, exifMode, onCapture, saveLocally]);
+  }, [pendingCapture, exifMode, getNextName, onCapture, saveLocally]);
 
   const handleModalName = useCallback(() => {
     if (modalDontShow) localStorage.setItem(SKIP_NAMING_MODAL_KEY, 'true');
