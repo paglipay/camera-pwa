@@ -42,16 +42,25 @@ export function Camera({ onCapture }) {
   const [exifMode, setExifMode] = useState(
     () => localStorage.getItem(EXIF_MODE_KEY) === 'true'
   );
-  const [customName, setCustomName] = useState('');
+  const CUSTOM_NAME_KEY = 'camera-pwa:custom-name';
+  const [customName, setCustomName] = useState(
+    () => localStorage.getItem(CUSTOM_NAME_KEY) ?? ''
+  );
+
+  const updateCustomName = useCallback((name) => {
+    setCustomName(name);
+    localStorage.setItem(CUSTOM_NAME_KEY, name);
+  }, []);
 
   // Tracks { baseName, count } to auto-suffix repeated names: 01 → 01A → 01B …
-  // Persisted in sessionStorage so it survives component remounts (e.g. after
-  // the OS camera app suspends/kills the browser tab and returns the photo).
+  // Persisted in localStorage so it survives remounts AND full tab/browser closes.
+  // This prevents sending a filename that already exists on the server (which would
+  // trigger Flask's collision avoidance and produce 01C_<timestamp>.jpg).
   const NAME_COUNTER_KEY = 'camera-pwa:name-counter';
 
   const readCounter = () => {
     try {
-      const raw = sessionStorage.getItem(NAME_COUNTER_KEY);
+      const raw = localStorage.getItem(NAME_COUNTER_KEY);
       return raw ? JSON.parse(raw) : { baseName: null, count: 0 };
     } catch {
       return { baseName: null, count: 0 };
@@ -59,7 +68,7 @@ export function Camera({ onCapture }) {
   };
 
   const writeCounter = (value) => {
-    try { sessionStorage.setItem(NAME_COUNTER_KEY, JSON.stringify(value)); } catch {}
+    try { localStorage.setItem(NAME_COUNTER_KEY, JSON.stringify(value)); } catch {}
   };
 
   const getNextName = useCallback((baseName) => {
@@ -213,7 +222,7 @@ export function Camera({ onCapture }) {
           className="filename-input"
           placeholder="e.g. site-photo"
           value={customName}
-          onChange={e => setCustomName(e.target.value)}
+          onChange={e => updateCustomName(e.target.value)}
           autoComplete="off"
           spellCheck={false}
         />
