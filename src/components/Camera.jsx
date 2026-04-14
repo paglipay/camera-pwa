@@ -1,6 +1,7 @@
 import { useRef, useCallback, useState } from 'react';
 
-const EXIF_MODE_KEY = 'camera-pwa:exif-mode';
+const EXIF_MODE_KEY        = 'camera-pwa:exif-mode';
+const SKIP_NAMING_MODAL_KEY = 'camera-pwa:skip-naming-modal';
 
 /** Resolve with { lat, lon } or null within `timeoutMs`. Never throws. */
 function getCoords(timeoutMs = 8000) {
@@ -43,6 +44,11 @@ export function Camera({ onCapture }) {
   );
   const [customName, setCustomName] = useState('');
 
+  // Naming modal state
+  const [pendingCapture, setPendingCapture] = useState(null); // { file, coords, ext }
+  const [modalName, setModalName]           = useState('');
+  const [modalDontShow, setModalDontShow]   = useState(false);
+
   const toggleExifMode = useCallback(() => {
     setExifMode(prev => {
       const next = !prev;
@@ -80,14 +86,87 @@ export function Camera({ onCapture }) {
       ? '.' + file.name.split('.').pop()
       : '';
     const baseName = customName.trim();
-    const finalName = baseName ? baseName + ext : file.name;
-    const namedFile = new File([file], finalName, { type: file.type });
+
+    // If no name provided and user hasn't opted out of the naming modal, show it
+    if (!baseName && localStorage.getItem(SKIP_NAMING_MODAL_KEY) !== 'true') {
+      setPendingCapture({ file, coords, ext });
+      setModalName('');
+      setModalDontShow(false);
+      return;
+    }
+
+    const finalName  = baseName ? baseName + ext : file.name;
+    const namedFile  = new File([file], finalName, { type: file.type });
     if (exifMode) await saveLocally(namedFile);
     onCapture(namedFile, finalName, coords);
   }, [customName, exifMode, onCapture, saveLocally]);
 
+  const commitCapture = useCallback(async (name) => {
+    if (!pendingCapture) return;
+    const { file, coords, ext } = pendingCapture;
+    const finalName = name.trim() ? name.trim() + ext : file.name;
+    const namedFile = new File([file], finalName, { type: file.type });
+    setPendingCapture(null);
+    if (exifMode) await saveLocally(namedFile);
+    onCapture(namedFile, finalName, coords);
+  }, [pendingCapture, exifMode, onCapture, saveLocally]);
+
+  const handleModalName = useCallback(() => {
+    if (modalDontShow) localStorage.setItem(SKIP_NAMING_MODAL_KEY, 'true');
+    commitCapture(modalName);
+  }, [modalDontShow, modalName, commitCapture]);
+
+  const handleModalCancel = useCallback(() => {
+    if (modalDontShow) localStorage.setItem(SKIP_NAMING_MODAL_KEY, 'true');
+    if (pendingCapture) commitCapture(''); // proceed with original file name
+    setPendingCapture(null);
+  }, [modalDontShow, pendingCapture, commitCapture]);
+
   return (
     <div className="camera-container">
+      {/* ── Naming modal ─────────────────────────────────────────────── */}
+      {pendingCapture && (
+        <div className="naming-modal-backdrop" role="dialog" aria-modal="true" aria-label="Name your file">
+          <div className="naming-modal">
+            <h2 className="naming-modal-title">Name your file</h2>
+            <p className="naming-modal-hint">
+              No file name was provided. Give your file a name or cancel to keep the original.
+            </p>
+            <label className="filename-input-label" htmlFor="modal-filename">
+              File name
+              <span className="filename-input-hint">(optional — extension is kept automatically)</span>
+            </label>
+            <input
+              id="modal-filename"
+              type="text"
+              className="filename-input"
+              placeholder="e.g. site-photo"
+              value={modalName}
+              onChange={e => setModalName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleModalName()}
+              autoFocus
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <label className="naming-modal-dontshow">
+              <input
+                type="checkbox"
+                checked={modalDontShow}
+                onChange={e => setModalDontShow(e.target.checked)}
+              />
+              Do not show again
+            </label>
+            <div className="naming-modal-actions">
+              <button className="naming-modal-btn naming-modal-btn--cancel" onClick={handleModalCancel}>
+                Cancel
+              </button>
+              <button className="naming-modal-btn naming-modal-btn--name" onClick={handleModalName}>
+                Name
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="filename-input-row">
         <label className="filename-input-label" htmlFor="custom-filename">
           File name
