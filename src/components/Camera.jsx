@@ -44,21 +44,36 @@ export function Camera({ onCapture }) {
   );
   const [customName, setCustomName] = useState('');
 
-  // Tracks { baseName, count } to auto-suffix repeated names: 01 → 01 → 01A → 01B …
-  const nameCounterRef = useRef({ baseName: null, count: 0 });
+  // Tracks { baseName, count } to auto-suffix repeated names: 01 → 01A → 01B …
+  // Persisted in sessionStorage so it survives component remounts (e.g. after
+  // the OS camera app suspends/kills the browser tab and returns the photo).
+  const NAME_COUNTER_KEY = 'camera-pwa:name-counter';
+
+  const readCounter = () => {
+    try {
+      const raw = sessionStorage.getItem(NAME_COUNTER_KEY);
+      return raw ? JSON.parse(raw) : { baseName: null, count: 0 };
+    } catch {
+      return { baseName: null, count: 0 };
+    }
+  };
+
+  const writeCounter = (value) => {
+    try { sessionStorage.setItem(NAME_COUNTER_KEY, JSON.stringify(value)); } catch {}
+  };
 
   const getNextName = useCallback((baseName) => {
     if (!baseName) return baseName;
-    const { baseName: prev, count } = nameCounterRef.current;
+    const { baseName: prev, count } = readCounter();
     if (prev !== baseName) {
-      nameCounterRef.current = { baseName, count: 1 };
+      writeCounter({ baseName, count: 1 });
       return baseName; // first use — no suffix
     }
     // Same base name — append A, B, C …
     const suffix = count <= 26
       ? String.fromCharCode(64 + count) // 1→A, 2→B …
       : String(count);                   // safety fallback beyond Z
-    nameCounterRef.current = { baseName, count: count + 1 };
+    writeCounter({ baseName, count: count + 1 });
     return baseName + suffix;
   }, []);
 
