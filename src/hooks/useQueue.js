@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { dbAdd, dbGetAll, dbUpdate, dbDelete } from '../utils/db';
+import { dbAdd, dbGetAll, dbUpdate, dbDelete, dbResetStuck } from '../utils/db';
 import { uploadImage } from '../utils/upload';
 
 export function useQueue(isOnline) {
@@ -111,8 +111,16 @@ export function useQueue(isOnline) {
     setItems(prev => prev.filter(i => i.status !== 'done'));
   }, [items]);
 
-  // ── Load queue on first mount ───────────────────────────────────────────
-  useEffect(() => { refresh(); }, [refresh]);
+  // ── Load queue on first mount (reset any stuck 'uploading' items first) ──
+  useEffect(() => {
+    dbResetStuck()
+      .then(count => {
+        if (count > 0) console.log(`[queue] reset ${count} stuck uploading item(s) to pending on mount`);
+      })
+      .catch(() => {})
+      .finally(() => refresh());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Process whenever we come online ────────────────────────────────────
   useEffect(() => {
@@ -137,7 +145,18 @@ export function useQueue(isOnline) {
     return () => navigator.serviceWorker.removeEventListener('message', onMessage);
   }, [processQueue]);
 
-  return { items, isProcessing, addImage, retryItem, removeItem, clearDone };
+  // ── Manually reset all stuck 'uploading' items back to 'pending' ─────────
+  const resetStuck = useCallback(async () => {
+    const count = await dbResetStuck();
+    if (count > 0) {
+      console.log(`[queue] manual resetStuck → reset ${count} item(s)`);
+      await refresh();
+      if (isOnlineRef.current) processQueue();
+    }
+    return count;
+  }, [refresh, processQueue]);
+
+  return { items, isProcessing, addImage, retryItem, removeItem, clearDone, resetStuck };
 }
 
 function registerBackgroundSync() {

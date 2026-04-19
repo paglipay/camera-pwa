@@ -18,7 +18,7 @@ const KEEP_ALIVE_OPTIONS = [
 
 export default function App() {
   const isOnline = useOnlineStatus();
-  const { items, isProcessing, addImage, retryItem, removeItem, clearDone } = useQueue(isOnline);
+  const { items, isProcessing, addImage, retryItem, removeItem, clearDone, resetStuck } = useQueue(isOnline);
 
   // ── Keep-alive preference ─────────────────────────────────────────────────
   const [keepAliveMs, setKeepAliveMs] = useState(() => {
@@ -111,6 +111,7 @@ export default function App() {
           onRetry={retryItem}
           onRemove={removeItem}
           onClearDone={clearDone}
+          onResetStuck={resetStuck}
         />
       </main>
     </div>

@@ -69,6 +69,39 @@ export async function dbUpdate(id, changes) {
   });
 }
 
+/**
+ * Reset any items stuck in 'uploading' back to 'pending'.
+ * Safe to call on mount — no upload can be in progress before the app starts.
+ * Returns the number of items that were reset.
+ */
+export async function dbResetStuck() {
+  const db   = await openDB();
+  const all  = await new Promise((resolve, reject) => {
+    const tx  = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () => resolve(req.result ?? []);
+    req.onerror   = () => reject(req.error);
+  });
+
+  const stuck = all.filter(i => i.status === 'uploading');
+  if (stuck.length === 0) return 0;
+
+  await Promise.all(stuck.map(item => new Promise((resolve, reject) => {
+    const tx    = db.transaction(STORE, 'readwrite');
+    const store = tx.objectStore(STORE);
+    const get   = store.get(item.id);
+    get.onsuccess = () => {
+      if (!get.result) { resolve(); return; }
+      const put = store.put({ ...get.result, status: 'pending', error: null });
+      put.onsuccess = () => resolve();
+      put.onerror   = () => reject(put.error);
+    };
+    get.onerror = () => reject(get.error);
+  })));
+
+  return stuck.length;
+}
+
 export async function dbDelete(id) {
   const db = await openDB();
   return new Promise((resolve, reject) => {
