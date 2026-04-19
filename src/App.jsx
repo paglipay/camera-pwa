@@ -9,11 +9,11 @@ import './App.css';
 
 // ── Keep-alive interval options ───────────────────────────────────────────
 const KEEP_ALIVE_OPTIONS = [
-  { label: 'Off',          value: 0           },
-  { label: 'Every 5 min',  value: 5  * 60_000 },
-  { label: 'Every 10 min', value: 10 * 60_000 },
-  { label: 'Every 20 min', value: 20 * 60_000 },
-  { label: 'Every 25 min', value: 25 * 60_000 },
+  { label: 'Off',  value: 0           },
+  { label: '5m',   value: 5  * 60_000 },
+  { label: '10m',  value: 10 * 60_000 },
+  { label: '20m',  value: 20 * 60_000 },
+  { label: '25m',  value: 25 * 60_000 },
 ];
 
 export default function App() {
@@ -25,8 +25,7 @@ export default function App() {
     const stored = localStorage.getItem('camera-pwa:keep-alive-ms');
     return stored !== null ? Number(stored) : 0;
   });
-  const handleKeepAliveChange = (e) => {
-    const val = Number(e.target.value);
+  const handleKeepAliveChange = (val) => {
     setKeepAliveMs(val);
     localStorage.setItem('camera-pwa:keep-alive-ms', String(val));
   };
@@ -70,6 +69,26 @@ export default function App() {
       <main className="main">
         <Camera onCapture={addImage} />
 
+        {/* ── Keep-alive pill selector ── */}
+        <div className="exif-toggle-row keep-alive-row">
+          <label className="exif-toggle-label">
+            <span className="exif-toggle-text">Keep server alive</span>
+            <span className="exif-toggle-hint">Ping interval to prevent dyno sleep.</span>
+          </label>
+          <div className="keep-alive-pills" role="group" aria-label="Keep-alive interval">
+            {KEEP_ALIVE_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                className={`keep-alive-pill${keepAliveMs === opt.value ? ' keep-alive-pill--active' : ''}`}
+                onClick={() => handleKeepAliveChange(opt.value)}
+                aria-pressed={keepAliveMs === opt.value}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* ── Auto-clear toggle ── */}
         <div className="exif-toggle-row">
           <label className="exif-toggle-label" htmlFor="auto-clear-toggle">
@@ -83,27 +102,6 @@ export default function App() {
             onClick={toggleAutoClear}
             aria-label="Toggle auto-clear"
           />
-        </div>
-
-        {/* ── Keep-alive selector ── */}
-        <div className="exif-toggle-row keep-alive-row">
-          <label className="exif-toggle-label" htmlFor="keep-alive-select">
-            <span className="exif-toggle-text">Keep server alive</span>
-            <span className="exif-toggle-hint">
-              Pings the server on an interval to prevent dyno sleep.
-            </span>
-          </label>
-          <select
-            id="keep-alive-select"
-            className="keep-alive-select"
-            value={keepAliveMs}
-            onChange={handleKeepAliveChange}
-            aria-label="Keep-alive interval"
-          >
-            {KEEP_ALIVE_OPTIONS.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
         </div>
 
         <ImageQueue
