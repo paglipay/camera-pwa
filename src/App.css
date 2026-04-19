@@ -153,6 +153,11 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+.btn-capture--video {
+  background: #7c3aed;
+  color: #fff;
+}
+
 .btn-capture:active { transform: scale(0.97); filter: brightness(0.9); }
 
 /* ── Upload Queue ──────────────────────────────────────────────────────── */
