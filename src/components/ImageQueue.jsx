@@ -98,4 +98,14 @@ function QueueItem({ item, onRetry, onRemove }) {
         )}
         {canRemove && (
           <button
-            className="btn-small bt
+            className="btn-small btn-small--danger"
+            onClick={() => onRemove(item.id)}
+            aria-label={`Remove ${item.fileName}`}
+          >
+            Remove
+          </button>
+        )}
+      </div>
+    </li>
+  );
+}
