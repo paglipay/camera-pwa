@@ -335,6 +335,60 @@
 .btn-small--danger { color: #fca5a5; }
 .btn-small--danger:hover { background: rgba(239, 68, 68, 0.2); }
 
+/* ── Wakeup banner ──────────────────────────────────────────────────────── */
+.wakeup-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 1rem;
+  background: #78350f;
+  color: #fde68a;
+  font-size: 0.82rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.wakeup-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(253, 230, 138, 0.35);
+  border-top-color: #fde68a;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ── Keep-alive select ──────────────────────────────────────────────────── */
+.keep-alive-row {
+  align-items: flex-start;
+}
+
+.keep-alive-select {
+  flex-shrink: 0;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23cbd5e1' d='M6 8 0 0h12z'/%3E%3C/svg%3E") no-repeat right 0.6rem center / 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.45rem 2rem 0.45rem 0.75rem;
+  cursor: pointer;
+  min-width: 130px;
+  transition: background 0.15s;
+}
+
+.keep-alive-select:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.keep-alive-select option {
+  background: #1e2235;
+  color: #e2e8f0;
+}
+
 /* ── Shared spinner ─────────────────────────────────────────────────────── */
 .spinner {
   display: inline-block;
