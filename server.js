@@ -11,6 +11,11 @@ const PORT = process.env.PORT || 3000;
 // ── Flask upstream URL — set FLASK_UPLOAD_URL in Heroku config vars ───────
 const FLASK_URL = (process.env.FLASK_UPLOAD_URL || '').replace(/\/$/, '');
 
+// ── Health check — used by client for wakeup detection & keep-alive pings ─
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', ts: Date.now() });
+});
+
 // ── Static assets (built by vite build / heroku-postbuild) ───────────────
 app.use(express.static(path.join(__dirname, 'dist')));
 

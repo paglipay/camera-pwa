@@ -59,6 +59,53 @@
   flex-shrink: 0;
 }
 
+/* ── Filename Input ────────────────────────────────────────────────────── */
+.filename-input-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.filename-input-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.filename-input-hint {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.filename-input {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.07);
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.filename-input::placeholder {
+  color: #64748b;
+}
+
+.filename-input:focus {
+  border-color: rgba(99, 179, 237, 0.6);
+  background: rgba(255, 255, 255, 0.1);
+}
+
 /* ── Capture Buttons ───────────────────────────────────────────────────── */
 .capture-buttons {
   display: flex;
@@ -224,6 +271,9 @@
 
 .btn-text:hover { background: rgba(96, 165, 250, 0.1); }
 
+.btn-text--warn         { color: #fbbf24; }
+.btn-text--warn:hover   { background: rgba(251, 191, 36, 0.12); }
+
 /* ── Queue List ─────────────────────────────────────────────────────────── */
 .queue-list {
   list-style: none;
@@ -339,6 +389,77 @@
 
 .btn-small--danger { color: #fca5a5; }
 .btn-small--danger:hover { background: rgba(239, 68, 68, 0.2); }
+
+/* ── Wakeup banner ──────────────────────────────────────────────────────── */
+.wakeup-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 1rem;
+  background: #78350f;
+  color: #fde68a;
+  font-size: 0.82rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.wakeup-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(253, 230, 138, 0.35);
+  border-top-color: #fde68a;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ── Keep-alive pill selector ───────────────────────────────────────────── */
+.keep-alive-row {
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.keep-alive-pills {
+  display: flex;
+  flex-shrink: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.keep-alive-pill {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.07);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.keep-alive-pill:last-child {
+  border-right: none;
+}
+
+.keep-alive-pill:hover {
+  background: rgba(255, 255, 255, 0.13);
+  color: #e2e8f0;
+}
+
+.keep-alive-pill--active {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.keep-alive-pill--active:hover {
+  background: #2563eb;
+  color: #fff;
+}
 
 /* ── Shared spinner ─────────────────────────────────────────────────────── */
 .spinner {

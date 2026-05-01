@@ -7,7 +7,7 @@ const STATUS_LABEL = {
   failed:    'Failed',
 };
 
-export function ImageQueue({ items, onRetry, onRemove, onClearDone }) {
+export function ImageQueue({ items, onRetry, onRemove, onClearDone, onResetStuck }) {
   if (items.length === 0) return null;
 
   const counts = items.reduce((acc, i) => ({ ...acc, [i.status]: (acc[i.status] ?? 0) + 1 }), {});
@@ -28,6 +28,16 @@ export function ImageQueue({ items, onRetry, onRemove, onClearDone }) {
           {counts.failed    > 0 && <span className="badge badge-failed">{counts.failed} failed</span>}
         </div>
 
+        {counts.uploading > 0 && onResetStuck && (
+          <button
+            className="btn-text btn-text--warn"
+            onClick={onResetStuck}
+            aria-label="Reset stuck uploading items"
+            title="Resets items stuck on 'Uploading…' back to pending so they retry"
+          >
+            Reset stuck
+          </button>
+        )}
         {hasDone && (
           <button className="btn-text" onClick={onClearDone} aria-label="Clear uploaded photos">
             Clear done
@@ -92,7 +102,7 @@ function QueueItem({ item, onRetry, onRemove }) {
             onClick={() => onRemove(item.id)}
             aria-label={`Remove ${item.fileName}`}
           >
-            ✕
+            Remove
           </button>
         )}
       </div>
