@@ -52,7 +52,8 @@ export function Camera({ onCapture }) {
     localStorage.setItem(CUSTOM_NAME_KEY, name);
   }, []);
 
-  // Tracks { baseName, count } to auto-suffix repeated names: 01 → 01A → 01B …
+  // Tracks per-(baseName+ext) counters to auto-suffix repeated names: 01 → 01A → 01B …
+  // Stored as a map { [baseName+ext]: count } so .jpg and .mp4 increment independently.
   // Persisted in localStorage so it survives remounts AND full tab/browser closes.
   // This prevents sending a filename that already exists on the server (which would
   // trigger Flask's collision avoidance and produce 01C_<timestamp>.jpg).
@@ -61,9 +62,12 @@ export function Camera({ onCapture }) {
   const readCounter = () => {
     try {
       const raw = localStorage.getItem(NAME_COUNTER_KEY);
-      return raw ? JSON.parse(raw) : { baseName: null, count: 0 };
+      const parsed = raw ? JSON.parse(raw) : {};
+      // Migrate old format { baseName, count } → reset to empty map
+      if (parsed && typeof parsed.baseName === 'string') return {};
+      return parsed && typeof parsed === 'object' ? parsed : {};
     } catch {
-      return { baseName: null, count: 0 };
+      return {};
     }
   };
 
@@ -71,18 +75,20 @@ export function Camera({ onCapture }) {
     try { localStorage.setItem(NAME_COUNTER_KEY, JSON.stringify(value)); } catch {}
   };
 
-  const getNextName = useCallback((baseName) => {
+  const getNextName = useCallback((baseName, ext) => {
     if (!baseName) return baseName;
-    const { baseName: prev, count } = readCounter();
-    if (prev !== baseName) {
-      writeCounter({ baseName, count: 1 });
+    const key = baseName + (ext || '');
+    const counters = readCounter();
+    const count = counters[key] ?? 0;
+    if (count === 0) {
+      writeCounter({ ...counters, [key]: 1 });
       return baseName; // first use — no suffix
     }
-    // Same base name — append A, B, C …
+    // Same base name+ext — append A, B, C …
     const suffix = count <= 26
       ? String.fromCharCode(64 + count) // 1→A, 2→B …
       : String(count);                   // safety fallback beyond Z
-    writeCounter({ baseName, count: count + 1 });
+    writeCounter({ ...counters, [key]: count + 1 });
     return baseName + suffix;
   }, []);
 
@@ -137,7 +143,7 @@ export function Camera({ onCapture }) {
       return;
     }
 
-    const resolvedName = getNextName(baseName);
+    const resolvedName = getNextName(baseName, ext);
     const finalName  = resolvedName ? resolvedName + ext : file.name;
     const namedFile  = new File([file], finalName, { type: file.type });
     if (exifMode) await saveLocally(namedFile);
@@ -147,7 +153,7 @@ export function Camera({ onCapture }) {
   const commitCapture = useCallback(async (name) => {
     if (!pendingCapture) return;
     const { file, coords, ext } = pendingCapture;
-    const resolvedName = getNextName(name.trim());
+    const resolvedName = getNextName(name.trim(), ext);
     const finalName = resolvedName ? resolvedName + ext : file.name;
     const namedFile = new File([file], finalName, { type: file.type });
     setPendingCapture(null);
