@@ -1,7 +1,10 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import schoolData from '../temp_r1.json';
 
-const PROJECTS = ['IP Cam', 'Intrusion Alarm'];
+const PROJECTS = [
+  { label: 'IP Cam',         abbr: 'CAM' },
+  { label: 'Intrusion Alarm', abbr: 'IA'  },
+];
 
 // Deduplicate by Loc Code; keep only records that have both a School Name and Loc Code
 const SCHOOLS = (() => {
@@ -45,8 +48,11 @@ export function FileNameHelper({ onNameChange }) {
     const schoolPart = selectedSchool
       ? `${selectedSchool.site}-${selectedSchool.locCode}`
       : schoolInput.trim();
-    const parts = [schoolPart, project].filter(Boolean);
-    onNameChange(parts.join('-'));
+    const projectPart = project ? `${project}01` : '';
+    if (!schoolPart && !projectPart) { onNameChange(''); return; }
+    if (!schoolPart)  { onNameChange(projectPart); return; }
+    if (!projectPart) { onNameChange(schoolPart);  return; }
+    onNameChange(`${schoolPart}_${projectPart}`);
   }, [selectedSchool, schoolInput, project, onNameChange]);
 
   // Close suggestions on outside click
@@ -74,9 +80,9 @@ export function FileNameHelper({ onNameChange }) {
     setShowSuggestions(true);
   };
 
-  const handleProjectChange = (p) => {
+  const handleProjectChange = (abbr) => {
     touched.current = true;
-    setProject(prev => (prev === p ? '' : p));
+    setProject(prev => (prev === abbr ? '' : abbr));
   };
 
   const handleClear = () => {
@@ -146,13 +152,13 @@ export function FileNameHelper({ onNameChange }) {
             <div className="keep-alive-pills" role="group" aria-label="Project type">
               {PROJECTS.map(p => (
                 <button
-                  key={p}
+                  key={p.abbr}
                   type="button"
-                  className={`keep-alive-pill${project === p ? ' keep-alive-pill--active' : ''}`}
-                  onClick={() => handleProjectChange(p)}
-                  aria-pressed={project === p}
+                  className={`keep-alive-pill${project === p.abbr ? ' keep-alive-pill--active' : ''}`}
+                  onClick={() => handleProjectChange(p.abbr)}
+                  aria-pressed={project === p.abbr}
                 >
-                  {p}
+                  {p.label}
                 </button>
               ))}
             </div>
