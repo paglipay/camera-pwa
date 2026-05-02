@@ -1,4 +1,5 @@
 import { useRef, useCallback, useState } from 'react';
+import { FileNameHelper } from './FileNameHelper';
 
 const EXIF_MODE_KEY        = 'camera-pwa:exif-mode';
 const SKIP_NAMING_MODAL_KEY = 'camera-pwa:skip-naming-modal';
@@ -217,6 +218,7 @@ export function Camera({ onCapture }) {
           </div>
         </div>
       )}
+      <FileNameHelper onNameChange={updateCustomName} />
       <div className="filename-input-row">
         <label className="filename-input-label" htmlFor="custom-filename">
           File name
