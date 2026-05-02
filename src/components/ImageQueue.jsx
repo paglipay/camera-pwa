@@ -7,7 +7,7 @@ const STATUS_LABEL = {
   failed:    'Failed',
 };
 
-export function ImageQueue({ items, onRetry, onRemove, onClearDone, onResetStuck }) {
+export function ImageQueue({ items, onRetry, onRemove, onClearDone, onResetStuck, onPreview }) {
   if (items.length === 0) return null;
 
   const counts = items.reduce((acc, i) => ({ ...acc, [i.status]: (acc[i.status] ?? 0) + 1 }), {});
@@ -47,14 +47,14 @@ export function ImageQueue({ items, onRetry, onRemove, onClearDone, onResetStuck
 
       <ul className="queue-list" role="list">
         {items.map(item => (
-          <QueueItem key={item.id} item={item} onRetry={onRetry} onRemove={onRemove} />
+          <QueueItem key={item.id} item={item} onRetry={onRetry} onRemove={onRemove} onPreview={onPreview} />
         ))}
       </ul>
     </section>
   );
 }
 
-function QueueItem({ item, onRetry, onRemove }) {
+function QueueItem({ item, onRetry, onRemove, onPreview }) {
   const [src, setSrc] = useState(null);
   const [isVideo, setIsVideo] = useState(false);
 
@@ -69,7 +69,14 @@ function QueueItem({ item, onRetry, onRemove }) {
 
   return (
     <li className={`queue-item status-${item.status}`} aria-label={item.fileName}>
-      <div className="qi-thumb">
+      <div
+        className={`qi-thumb${onPreview ? ' qi-thumb--clickable' : ''}`}
+        role={onPreview ? 'button' : undefined}
+        tabIndex={onPreview ? 0 : undefined}
+        aria-label={onPreview ? `Preview ${item.fileName}` : undefined}
+        onClick={onPreview ? () => onPreview({ blob: item.blob, fileName: item.fileName }) : undefined}
+        onKeyDown={onPreview ? e => (e.key === 'Enter' || e.key === ' ') && onPreview({ blob: item.blob, fileName: item.fileName }) : undefined}
+      >
         {src && isVideo ? (
           <video src={src} controls={false} muted />
         ) : (

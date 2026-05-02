@@ -66,14 +66,27 @@ export default function App() {
   });
 
   // ── Filename reveal modal ─────────────────────────────────────────────────
-  const [revealFileName, setRevealFileName] = useState(null);
+  const [revealData, setRevealData] = useState(null); // { fileName, blobUrl, isVideo }
+
+  const closeReveal = useCallback(() => {
+    setRevealData(prev => {
+      if (prev?.blobUrl) URL.revokeObjectURL(prev.blobUrl);
+      return null;
+    });
+  }, []);
 
   const handleCapture = useCallback((file, fileName, coords) => {
     addImage(file, fileName, coords);
     if (showFilenameAfterCapture) {
-      setRevealFileName(fileName);
+      const blobUrl = URL.createObjectURL(file);
+      setRevealData({ fileName, blobUrl, isVideo: file.type.startsWith('video/') });
     }
   }, [addImage, showFilenameAfterCapture]);
+
+  const handlePreview = useCallback(({ blob, fileName }) => {
+    const blobUrl = URL.createObjectURL(blob);
+    setRevealData({ fileName, blobUrl, isVideo: blob.type.startsWith('video/') });
+  }, []);
 
   // ── Settings accordion ────────────────────────────────────────────────────
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -102,20 +115,39 @@ export default function App() {
       />
 
       {/* ── Filename reveal modal ── */}
-      {revealFileName && (
+      {revealData && (
         <div
           className="reveal-modal-backdrop"
           role="dialog"
           aria-modal="true"
           aria-label="File saved"
-          onClick={() => setRevealFileName(null)}
+          onClick={closeReveal}
         >
           <div className="reveal-modal" onClick={e => e.stopPropagation()}>
-            <p className="reveal-modal-label">File saved as</p>
-            <p className="reveal-modal-filename">{revealFileName}</p>
-            <button className="reveal-modal-close" onClick={() => setRevealFileName(null)}>
-              Dismiss
-            </button>
+            {/* media background */}
+            {revealData.isVideo ? (
+              <video
+                className="reveal-modal-bg"
+                src={revealData.blobUrl}
+                autoPlay
+                loop
+                muted
+                playsInline
+              />
+            ) : (
+              <div
+                className="reveal-modal-bg"
+                style={{ backgroundImage: `url(${revealData.blobUrl})` }}
+                aria-hidden="true"
+              />
+            )}
+            <div className="reveal-modal-content">
+              <p className="reveal-modal-label">File saved as</p>
+              <p className="reveal-modal-filename">{revealData.fileName}</p>
+              <button className="reveal-modal-close" onClick={closeReveal}>
+                Dismiss
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -215,6 +247,7 @@ export default function App() {
           onRemove={removeItem}
           onClearDone={clearDone}
           onResetStuck={resetStuck}
+          onPreview={handlePreview}
         />
       </main>
     </div>
