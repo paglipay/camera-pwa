@@ -1,7 +1,6 @@
 import { useRef, useCallback, useState } from 'react';
 import { FileNameHelper } from './FileNameHelper';
 
-const EXIF_MODE_KEY        = 'camera-pwa:exif-mode';
 const SKIP_NAMING_MODAL_KEY = 'camera-pwa:skip-naming-modal';
 
 /** Resolve with { lat, lon } or null within `timeoutMs`. Never throws. */
@@ -33,16 +32,11 @@ function getCoords(timeoutMs = 8000) {
   });
 }
 
-export function Camera({ onCapture }) {
+export function Camera({ onCapture, exifMode }) {
   const cameraInputRef  = useRef(null);
   const videoInputRef   = useRef(null);
   const galleryInputRef = useRef(null);
 
-  // When exifMode is true the camera button opens the file picker (no `capture`
-  // attribute) so the user picks an already-saved photo which retains EXIF data.
-  const [exifMode, setExifMode] = useState(
-    () => localStorage.getItem(EXIF_MODE_KEY) === 'true'
-  );
   const CUSTOM_NAME_KEY = 'camera-pwa:custom-name';
   const [customName, setCustomName] = useState(
     () => localStorage.getItem(CUSTOM_NAME_KEY) ?? ''
@@ -97,14 +91,6 @@ export function Camera({ onCapture }) {
   const [pendingCapture, setPendingCapture] = useState(null); // { file, coords, ext }
   const [modalName, setModalName]           = useState('');
   const [modalDontShow, setModalDontShow]   = useState(false);
-
-  const toggleExifMode = useCallback(() => {
-    setExifMode(prev => {
-      const next = !prev;
-      localStorage.setItem(EXIF_MODE_KEY, String(next));
-      return next;
-    });
-  }, []);
 
   const saveLocally = useCallback(async (file) => {
     if (navigator.canShare?.({ files: [file] })) {
@@ -233,26 +219,6 @@ export function Camera({ onCapture }) {
           onChange={e => updateCustomName(e.target.value)}
           autoComplete="off"
           spellCheck={false}
-        />
-      </div>
-      <div className="exif-toggle-row">
-        <label className="exif-toggle-label" htmlFor="exif-toggle">
-          <span className="exif-toggle-text">
-            {exifMode ? 'Capture + save to device' : 'Upload only'}
-          </span>
-          <span className="exif-toggle-hint">
-            {exifMode
-              ? 'Photo is captured and also saved to your device storage'
-              : 'Photo is captured and uploaded without saving to device'}
-          </span>
-        </label>
-        <button
-          id="exif-toggle"
-          role="switch"
-          aria-checked={exifMode}
-          className={`toggle-switch${exifMode ? ' toggle-switch--on' : ''}`}
-          onClick={toggleExifMode}
-          aria-label="Toggle EXIF mode"
         />
       </div>
 

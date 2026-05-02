@@ -596,3 +596,118 @@
   background: rgba(255, 255, 255, 0.07);
   color: #e2e8f0;
 }
+
+/* ── Settings Accordion ─────────────────────────────────────────────────── */
+.settings-accordion {
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto 1rem;
+  padding: 0 1.5rem;
+}
+
+.settings-accordion-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.9rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.settings-accordion-header:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.settings-accordion-header--open {
+  border-radius: 10px 10px 0 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-accordion-chevron {
+  font-size: 1.1rem;
+  line-height: 1;
+  display: inline-block;
+  transform: rotate(0deg);
+  transition: transform 0.2s;
+  color: #94a3b8;
+}
+
+.settings-accordion-chevron--open {
+  transform: rotate(90deg);
+}
+
+.settings-accordion-body {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  padding: 0.25rem 0.9rem 0;
+}
+
+/* ── Filename Reveal Modal ──────────────────────────────────────────────── */
+.reveal-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  backdrop-filter: blur(3px);
+}
+
+.reveal-modal {
+  background: #1e2235;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 2.5rem 2rem 2rem;
+  max-width: 90vw;
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.reveal-modal-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.reveal-modal-filename {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #e2e8f0;
+  margin: 0;
+  word-break: break-all;
+  line-height: 1.2;
+}
+
+.reveal-modal-close {
+  margin-top: 0.5rem;
+  padding: 0.6rem 2rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.reveal-modal-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
