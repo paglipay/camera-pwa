@@ -252,92 +252,102 @@ export function WebcamCapture({ onCapture, exifMode }) {
 
   return (
     <div className="webcam-container">
-      <FileNameHelper onNameChange={updateCustomName} />
+      <div className="webcam-layout">
 
-      <div className="filename-input-row">
-        <label className="filename-input-label" htmlFor="webcam-filename">
-          File name
-          <span className="filename-input-hint">(optional — extension is kept automatically)</span>
-        </label>
-        <input
-          id="webcam-filename"
-          type="text"
-          className="filename-input"
-          placeholder="e.g. site-photo"
-          value={customName}
-          onChange={e => updateCustomName(e.target.value)}
-          autoComplete="off"
-          spellCheck={false}
-        />
-      </div>
+        {/* ── Left: live viewfinder ── */}
+        <div className="webcam-panel-video">
+          <div className="webcam-preview-wrapper">
+            {error ? (
+              <div className="webcam-error">
+                <p className="webcam-error-title">Camera unavailable</p>
+                <p className="webcam-error-detail">{error}</p>
+                <button className="btn-capture" onClick={() => startCamera(deviceId || undefined)}>
+                  Retry
+                </button>
+              </div>
+            ) : (
+              <video
+                ref={videoRef}
+                className="webcam-video"
+                autoPlay
+                muted
+                playsInline
+              />
+            )}
 
-      {devices.length > 1 && (
-        <div className="webcam-device-row">
-          <label className="webcam-device-label" htmlFor="webcam-device-select">
-            Camera source
-          </label>
-          <select
-            id="webcam-device-select"
-            className="webcam-device-select"
-            value={deviceId}
-            onChange={e => handleDeviceChange(e.target.value)}
-          >
-            {devices.map((d, i) => (
-              <option key={d.deviceId} value={d.deviceId}>
-                {d.label || `Camera ${i + 1}`}
-              </option>
-            ))}
-          </select>
+            {isRecording && (
+              <div className="webcam-rec-badge" aria-label={`Recording — ${formatTime(recSeconds)}`}>
+                <span className="webcam-rec-dot" aria-hidden="true" />
+                REC&nbsp;{formatTime(recSeconds)}
+              </div>
+            )}
+          </div>
         </div>
-      )}
 
-      <div className="webcam-preview-wrapper">
-        {error ? (
-          <div className="webcam-error">
-            <p className="webcam-error-title">Camera unavailable</p>
-            <p className="webcam-error-detail">{error}</p>
-            <button className="btn-capture" onClick={() => startCamera(deviceId || undefined)}>
-              Retry
+        {/* ── Right: controls panel ── */}
+        <div className="webcam-panel-controls">
+          <FileNameHelper onNameChange={updateCustomName} />
+
+          <div className="filename-input-row">
+            <label className="filename-input-label" htmlFor="webcam-filename">
+              File name
+              <span className="filename-input-hint">(optional — extension is kept automatically)</span>
+            </label>
+            <input
+              id="webcam-filename"
+              type="text"
+              className="filename-input"
+              placeholder="e.g. site-photo"
+              value={customName}
+              onChange={e => updateCustomName(e.target.value)}
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </div>
+
+          {devices.length > 1 && (
+            <div className="webcam-device-row">
+              <label className="webcam-device-label" htmlFor="webcam-device-select">
+                Camera source
+              </label>
+              <select
+                id="webcam-device-select"
+                className="webcam-device-select"
+                value={deviceId}
+                onChange={e => handleDeviceChange(e.target.value)}
+              >
+                {devices.map((d, i) => (
+                  <option key={d.deviceId} value={d.deviceId}>
+                    {d.label || `Camera ${i + 1}`}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="capture-buttons">
+            <button
+              className="btn-capture"
+              onClick={handleSnapshot}
+              disabled={!isReady || isRecording}
+              aria-label="Take snapshot"
+            >
+              <SnapIcon />
+              Snap
+            </button>
+
+            <button
+              className={`btn-capture${isRecording ? ' btn-capture--stop' : ' btn-capture--video'}`}
+              onClick={handleRecordToggle}
+              disabled={!isReady}
+              aria-label={isRecording ? 'Stop recording' : 'Start recording'}
+            >
+              {isRecording ? <StopIcon /> : <VideoIcon />}
+              {isRecording ? `Stop  ${formatTime(recSeconds)}` : 'Record'}
             </button>
           </div>
-        ) : (
-          <video
-            ref={videoRef}
-            className="webcam-video"
-            autoPlay
-            muted
-            playsInline
-          />
-        )}
+        </div>
 
-        {isRecording && (
-          <div className="webcam-rec-badge" aria-label={`Recording — ${formatTime(recSeconds)}`}>
-            <span className="webcam-rec-dot" aria-hidden="true" />
-            REC&nbsp;{formatTime(recSeconds)}
-          </div>
-        )}
-      </div>
-
-      <div className="capture-buttons">
-        <button
-          className="btn-capture"
-          onClick={handleSnapshot}
-          disabled={!isReady || isRecording}
-          aria-label="Take snapshot"
-        >
-          <SnapIcon />
-          Snap
-        </button>
-
-        <button
-          className={`btn-capture${isRecording ? ' btn-capture--stop' : ' btn-capture--video'}`}
-          onClick={handleRecordToggle}
-          disabled={!isReady}
-          aria-label={isRecording ? 'Stop recording' : 'Start recording'}
-        >
-          {isRecording ? <StopIcon /> : <VideoIcon />}
-          {isRecording ? `Stop  ${formatTime(recSeconds)}` : 'Record'}
-        </button>
       </div>
     </div>
   );
