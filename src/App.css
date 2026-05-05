@@ -752,6 +752,186 @@
   background: rgba(0, 0, 0, 0.65);
 }
 
+/* ── View toggle ────────────────────────────────────────────────────────── */
+.view-toggle {
+  display: flex;
+  justify-content: center;
+  padding: 0.85rem 1rem 0;
+}
+
+.view-toggle-btn {
+  flex: 1;
+  max-width: 140px;
+  padding: 0.45rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.view-toggle-btn:first-child {
+  border-radius: 8px 0 0 8px;
+  border-right: none;
+}
+
+.view-toggle-btn:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+.view-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.11);
+  color: #e2e8f0;
+}
+
+.view-toggle-btn--active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+.view-toggle-btn--active:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+/* ── Webcam Container ────────────────────────────────────────────────────── */
+.webcam-container {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  flex-shrink: 0;
+}
+
+/* ── Webcam device selector ─────────────────────────────────────────────── */
+.webcam-device-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.webcam-device-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.webcam-device-select {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.07);
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  appearance: auto;
+}
+
+.webcam-device-select:focus {
+  border-color: rgba(99, 179, 237, 0.6);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Webcam preview ─────────────────────────────────────────────────────── */
+.webcam-preview-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0f172a;
+  min-height: 120px;
+}
+
+.webcam-video {
+  display: block;
+  width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+  background: #0f172a;
+}
+
+/* ── Recording badge overlay ────────────────────────────────────────────── */
+.webcam-rec-badge {
+  position: absolute;
+  top: 0.65rem;
+  left: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  background: rgba(0, 0, 0, 0.65);
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.06em;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+
+.webcam-rec-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+  animation: rec-pulse 1s ease-in-out infinite;
+}
+
+@keyframes rec-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+/* ── Webcam error state ─────────────────────────────────────────────────── */
+.webcam-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+}
+
+.webcam-error-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fca5a5;
+  margin: 0;
+}
+
+.webcam-error-detail {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* ── Stop recording button variant ─────────────────────────────────────── */
+.btn-capture--stop {
+  background: #dc2626;
+  color: #fff;
+}
+
+.btn-capture--stop:hover {
+  filter: brightness(1.1);
+}
+
+/* ── Disabled capture button ────────────────────────────────────────────── */
+.btn-capture:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+  filter: none !important;
+}
+
 /* ── Clickable queue thumbnail ──────────────────────────────────────────── */
 .qi-thumb--clickable {
   cursor: pointer;

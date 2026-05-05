@@ -3,6 +3,7 @@ import { useOnlineStatus }   from './hooks/useOnlineStatus';
 import { useQueue }          from './hooks/useQueue';
 import { useServerStatus }   from './hooks/useServerStatus';
 import { Camera }            from './components/Camera';
+import { WebcamCapture }     from './components/WebcamCapture';
 import { ImageQueue }        from './components/ImageQueue';
 import { StatusBar }         from './components/StatusBar';
 import './App.css';
@@ -88,6 +89,9 @@ export default function App() {
     setRevealData({ fileName, blobUrl, isVideo: blob.type.startsWith('video/') });
   }, []);
 
+  // ── View toggle ──────────────────────────────────────────────────────────
+  const [view, setView] = useState('mobile'); // 'mobile' | 'webcam'
+
   // ── Settings accordion ────────────────────────────────────────────────────
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -153,7 +157,27 @@ export default function App() {
       )}
 
       <main className="main">
-        <Camera onCapture={handleCapture} exifMode={exifMode} />
+        <div className="view-toggle" role="group" aria-label="Camera mode">
+          <button
+            className={`view-toggle-btn${view === 'mobile' ? ' view-toggle-btn--active' : ''}`}
+            onClick={() => setView('mobile')}
+            aria-pressed={view === 'mobile'}
+          >
+            Mobile
+          </button>
+          <button
+            className={`view-toggle-btn${view === 'webcam' ? ' view-toggle-btn--active' : ''}`}
+            onClick={() => setView('webcam')}
+            aria-pressed={view === 'webcam'}
+          >
+            Webcam
+          </button>
+        </div>
+
+        {view === 'mobile'
+          ? <Camera onCapture={handleCapture} exifMode={exifMode} />
+          : <WebcamCapture onCapture={handleCapture} exifMode={exifMode} />
+        }
 
         {/* ── Settings accordion ── */}
         <div className="settings-accordion">
