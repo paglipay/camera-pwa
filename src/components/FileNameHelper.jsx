@@ -6,6 +6,8 @@ const PROJECTS = [
   { label: 'Intrusion Alarm', abbr: 'IA'  },
 ];
 
+const LOCATION_TYPES = ['MDF', 'IDF', 'LDF', 'CLDF'];
+
 // Deduplicate by Loc Code; keep only records that have both a School Name and Loc Code
 const SCHOOLS = (() => {
   const seen = new Set();
@@ -26,6 +28,7 @@ export function FileNameHelper({ onNameChange }) {
   const [schoolInput, setSchoolInput]       = useState('');
   const [selectedSchool, setSelectedSchool] = useState(null); // { site, locCode, schoolName }
   const [project, setProject]               = useState('');
+  const [locationType, setLocationType]       = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const autocompleteRef = useRef(null);
@@ -48,12 +51,14 @@ export function FileNameHelper({ onNameChange }) {
     const schoolPart = selectedSchool
       ? `${selectedSchool.site}-${selectedSchool.locCode}`
       : schoolInput.trim();
-    const projectPart = project ? `${project}01` : '';
+    const projectPart = project
+      ? (locationType ? `${project}_${locationType}` : `${project}01`)
+      : '';
     if (!schoolPart && !projectPart) { onNameChange(''); return; }
     if (!schoolPart)  { onNameChange(projectPart); return; }
     if (!projectPart) { onNameChange(schoolPart);  return; }
     onNameChange(`${schoolPart}_${projectPart}`);
-  }, [selectedSchool, schoolInput, project, onNameChange]);
+  }, [selectedSchool, schoolInput, project, locationType, onNameChange]);
 
   // Close suggestions on outside click
   useEffect(() => {
@@ -83,6 +88,12 @@ export function FileNameHelper({ onNameChange }) {
   const handleProjectChange = (abbr) => {
     touched.current = true;
     setProject(prev => (prev === abbr ? '' : abbr));
+    setLocationType('');
+  };
+
+  const handleLocationTypeChange = (type) => {
+    touched.current = true;
+    setLocationType(prev => (prev === type ? '' : type));
   };
 
   const handleClear = () => {
@@ -90,6 +101,7 @@ export function FileNameHelper({ onNameChange }) {
     setSchoolInput('');
     setSelectedSchool(null);
     setProject('');
+    setLocationType('');
     onNameChange('');
   };
 
@@ -163,6 +175,26 @@ export function FileNameHelper({ onNameChange }) {
               ))}
             </div>
           </div>
+
+          {/* ── Location Type (IP Cam only) ─────────────────────────── */}
+          {project === 'CAM' && (
+            <div className="fnhelper-field">
+              <label className="fnhelper-label">Location Type</label>
+              <div className="keep-alive-pills" role="group" aria-label="Location type">
+                {LOCATION_TYPES.map(type => (
+                  <button
+                    key={type}
+                    type="button"
+                    className={`keep-alive-pill${locationType === type ? ' keep-alive-pill--active' : ''}`}
+                    onClick={() => handleLocationTypeChange(type)}
+                    aria-pressed={locationType === type}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <button type="button" className="fnhelper-clear" onClick={handleClear}>
             Clear
