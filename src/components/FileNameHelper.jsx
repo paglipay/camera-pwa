@@ -7,6 +7,7 @@ const PROJECTS = [
 ];
 
 const LOCATION_TYPES = ['MDF', 'IDF', 'LDF', 'CLDF'];
+const INSTALL_TYPES  = ['INSTALL', 'ENTRANCE'];
 
 // Deduplicate by Loc Code; keep only records that have both a School Name and Loc Code
 const SCHOOLS = (() => {
@@ -29,6 +30,7 @@ export function FileNameHelper({ onNameChange }) {
   const [selectedSchool, setSelectedSchool] = useState(null); // { site, locCode, schoolName }
   const [project, setProject]               = useState('');
   const [locationType, setLocationType]       = useState('');
+  const [installType, setInstallType]         = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const autocompleteRef = useRef(null);
@@ -52,13 +54,19 @@ export function FileNameHelper({ onNameChange }) {
       ? `${selectedSchool.site}-${selectedSchool.locCode}`
       : schoolInput.trim();
     const projectPart = project
-      ? (locationType ? `${project}_${locationType}` : `${project}01`)
+      ? (() => {
+          if (!locationType && !installType) return `${project}01`;
+          const parts = [project];
+          if (locationType) parts.push(locationType);
+          if (installType)  parts.push(installType);
+          return parts.join('_');
+        })()
       : '';
     if (!schoolPart && !projectPart) { onNameChange(''); return; }
     if (!schoolPart)  { onNameChange(projectPart); return; }
     if (!projectPart) { onNameChange(schoolPart);  return; }
     onNameChange(`${schoolPart}_${projectPart}`);
-  }, [selectedSchool, schoolInput, project, locationType, onNameChange]);
+  }, [selectedSchool, schoolInput, project, locationType, installType, onNameChange]);
 
   // Close suggestions on outside click
   useEffect(() => {
@@ -89,11 +97,17 @@ export function FileNameHelper({ onNameChange }) {
     touched.current = true;
     setProject(prev => (prev === abbr ? '' : abbr));
     setLocationType('');
+    setInstallType('');
   };
 
   const handleLocationTypeChange = (type) => {
     touched.current = true;
     setLocationType(prev => (prev === type ? '' : type));
+  };
+
+  const handleInstallTypeChange = (type) => {
+    touched.current = true;
+    setInstallType(prev => (prev === type ? '' : type));
   };
 
   const handleClear = () => {
@@ -102,6 +116,7 @@ export function FileNameHelper({ onNameChange }) {
     setSelectedSchool(null);
     setProject('');
     setLocationType('');
+    setInstallType('');
     onNameChange('');
   };
 
@@ -188,6 +203,26 @@ export function FileNameHelper({ onNameChange }) {
                     className={`keep-alive-pill${locationType === type ? ' keep-alive-pill--active' : ''}`}
                     onClick={() => handleLocationTypeChange(type)}
                     aria-pressed={locationType === type}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Install Type (IP Cam only) ──────────────────────────── */}
+          {project === 'CAM' && (
+            <div className="fnhelper-field">
+              <label className="fnhelper-label">Install Type</label>
+              <div className="keep-alive-pills" role="group" aria-label="Install type">
+                {INSTALL_TYPES.map(type => (
+                  <button
+                    key={type}
+                    type="button"
+                    className={`keep-alive-pill${installType === type ? ' keep-alive-pill--active' : ''}`}
+                    onClick={() => handleInstallTypeChange(type)}
+                    aria-pressed={installType === type}
                   >
                     {type}
                   </button>
