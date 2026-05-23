@@ -8,8 +8,8 @@ const PROJECTS = [
 
 const LOCATION_TYPES = ['MDF', 'IDF', 'LDF', 'CLDF'];
 const INSTALL_TYPES  = ['INSTALL', 'ENTRANCE'];
-const SEQUENCE_NUMS  = Array.from({ length: 31 }, (_, i) => String(i).padStart(2, '0')); // '00'–'30'
-const SEQUENCE_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+const SEQUENCE_NUMS    = Array.from({ length: 30 }, (_, i) => String(i + 1).padStart(2, '0')); // '01'–'30'
+const SEQUENCE_LETTERS = ['A', 'B', 'C', 'D'];
 
 // Deduplicate by Loc Code; keep only records that have both a School Name and Loc Code
 const SCHOOLS = (() => {
@@ -35,6 +35,7 @@ export function FileNameHelper({ onNameChange }) {
   const [installType, setInstallType]         = useState('');
   const [sequenceNum, setSequenceNum]         = useState('');
   const [sequenceLetter, setSequenceLetter]   = useState('');
+  const [locCodeOnly, setLocCodeOnly]         = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const autocompleteRef = useRef(null);
@@ -55,7 +56,7 @@ export function FileNameHelper({ onNameChange }) {
   useEffect(() => {
     if (!touched.current) return;
     const schoolPart = selectedSchool
-      ? `${selectedSchool.site}-${selectedSchool.locCode}`
+      ? (locCodeOnly ? `${selectedSchool.locCode}` : `${selectedSchool.site}-${selectedSchool.locCode}`)
       : schoolInput.trim();
     const projectPart = project
       ? (() => {
@@ -71,8 +72,8 @@ export function FileNameHelper({ onNameChange }) {
     if (!coreName && !suffix) { onNameChange(''); return; }
     if (!coreName)  { onNameChange(suffix);   return; }
     if (!suffix)    { onNameChange(coreName); return; }
-    onNameChange(`${coreName}_${suffix}`);
-  }, [selectedSchool, schoolInput, project, locationType, installType, sequenceNum, sequenceLetter, onNameChange]);
+    onNameChange(`${coreName}${suffix}`);
+  }, [selectedSchool, schoolInput, project, locationType, installType, sequenceNum, sequenceLetter, locCodeOnly, onNameChange]);
 
   // Close suggestions on outside click
   useEffect(() => {
@@ -126,6 +127,11 @@ export function FileNameHelper({ onNameChange }) {
     setSequenceLetter(prev => (prev === letter ? '' : letter));
   };
 
+  const handleLocCodeOnlyChange = () => {
+    touched.current = true;
+    setLocCodeOnly(prev => !prev);
+  };
+
   const handleClear = () => {
     touched.current = true;
     setSchoolInput('');
@@ -135,6 +141,7 @@ export function FileNameHelper({ onNameChange }) {
     setInstallType('');
     setSequenceNum('');
     setSequenceLetter('');
+    setLocCodeOnly(false);
     onNameChange('');
   };
 
@@ -189,6 +196,23 @@ export function FileNameHelper({ onNameChange }) {
                 Using: {selectedSchool.site} · {selectedSchool.locCode}
               </p>
             )}
+          </div>
+
+          {/* ── Loc code only toggle ────────────────────────────────── */}
+          <div className="fnhelper-field fnhelper-field--row">
+            <label className="fnhelper-toggle-label" htmlFor="fnhelper-loccode-only">
+              Loc code only
+              <span className="fnhelper-toggle-hint">Omit site prefix — use loc code only (e.g. 9545)</span>
+            </label>
+            <button
+              id="fnhelper-loccode-only"
+              type="button"
+              role="switch"
+              aria-checked={locCodeOnly}
+              className={`toggle-switch${locCodeOnly ? ' toggle-switch--on' : ''}`}
+              onClick={handleLocCodeOnlyChange}
+              aria-label="Use loc code only"
+            />
           </div>
 
           {/* ── Project ────────────────────────────────────────────── */}

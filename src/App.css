@@ -619,6 +619,30 @@
   color: #e2e8f0;
 }
 
+/* Inline toggle row inside FileNameHelper (e.g. Loc code only) */
+.fnhelper-field--row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.fnhelper-toggle-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #94a3b8;
+  flex: 1;
+}
+
+.fnhelper-toggle-hint {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: #4a5568;
+}
+
 /* ── Settings Accordion ─────────────────────────────────────────────────── */
 .settings-accordion {
   max-width: 640px;
