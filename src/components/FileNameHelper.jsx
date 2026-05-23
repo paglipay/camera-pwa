@@ -6,10 +6,8 @@ const PROJECTS = [
   { label: 'Intrusion Alarm', abbr: 'IA'  },
 ];
 
-const LOCATION_TYPES = ['MDF', 'IDF', 'LDF', 'CLDF'];
-const INSTALL_TYPES  = ['INSTALL', 'ENTRANCE'];
 const SEQUENCE_NUMS    = Array.from({ length: 30 }, (_, i) => String(i + 1).padStart(2, '0')); // '01'–'30'
-const SEQUENCE_LETTERS = ['A', 'B', 'C', 'D'];
+const SEQUENCE_LETTERS = ['A', 'B', 'C', 'D', 'INSTALL', 'VIDEO'];
 
 // Deduplicate by Loc Code; keep only records that have both a School Name and Loc Code
 const SCHOOLS = (() => {
@@ -31,8 +29,6 @@ export function FileNameHelper({ onNameChange }) {
   const [schoolInput, setSchoolInput]       = useState('');
   const [selectedSchool, setSelectedSchool] = useState(null); // { site, locCode, schoolName }
   const [project, setProject]               = useState('');
-  const [locationType, setLocationType]       = useState('');
-  const [installType, setInstallType]         = useState('');
   const [sequenceNum, setSequenceNum]         = useState('');
   const [sequenceLetter, setSequenceLetter]   = useState('');
   const [locCodeOnly, setLocCodeOnly]         = useState(false);
@@ -58,14 +54,7 @@ export function FileNameHelper({ onNameChange }) {
     const schoolPart = selectedSchool
       ? (locCodeOnly ? `${selectedSchool.locCode}` : `${selectedSchool.site}-${selectedSchool.locCode}`)
       : schoolInput.trim();
-    const projectPart = project
-      ? (() => {
-          const parts = [project];
-          if (locationType) parts.push(locationType);
-          if (installType)  parts.push(installType);
-          return parts.join('_');
-        })()
-      : '';
+    const projectPart = project || '';
     const suffix = sequenceNum + sequenceLetter; // e.g. '01A', '01', 'A', ''
     const coreParts = [schoolPart, projectPart].filter(Boolean);
     const coreName  = coreParts.join('_');
@@ -73,7 +62,7 @@ export function FileNameHelper({ onNameChange }) {
     if (!coreName)  { onNameChange(suffix);   return; }
     if (!suffix)    { onNameChange(coreName); return; }
     onNameChange(`${coreName}${suffix}`);
-  }, [selectedSchool, schoolInput, project, locationType, installType, sequenceNum, sequenceLetter, locCodeOnly, onNameChange]);
+  }, [selectedSchool, schoolInput, project, sequenceNum, sequenceLetter, locCodeOnly, onNameChange]);
 
   // Close suggestions on outside click
   useEffect(() => {
@@ -103,18 +92,6 @@ export function FileNameHelper({ onNameChange }) {
   const handleProjectChange = (abbr) => {
     touched.current = true;
     setProject(prev => (prev === abbr ? '' : abbr));
-    setLocationType('');
-    setInstallType('');
-  };
-
-  const handleLocationTypeChange = (type) => {
-    touched.current = true;
-    setLocationType(prev => (prev === type ? '' : type));
-  };
-
-  const handleInstallTypeChange = (type) => {
-    touched.current = true;
-    setInstallType(prev => (prev === type ? '' : type));
   };
 
   const handleSequenceNumChange = (num) => {
@@ -137,8 +114,6 @@ export function FileNameHelper({ onNameChange }) {
     setSchoolInput('');
     setSelectedSchool(null);
     setProject('');
-    setLocationType('');
-    setInstallType('');
     setSequenceNum('');
     setSequenceLetter('');
     setLocCodeOnly(false);
@@ -232,46 +207,6 @@ export function FileNameHelper({ onNameChange }) {
               ))}
             </div>
           </div>
-
-          {/* ── Location Type (IP Cam only) ─────────────────────────── */}
-          {project === 'CAM' && (
-            <div className="fnhelper-field">
-              <label className="fnhelper-label">Location Type</label>
-              <div className="keep-alive-pills" role="group" aria-label="Location type">
-                {LOCATION_TYPES.map(type => (
-                  <button
-                    key={type}
-                    type="button"
-                    className={`keep-alive-pill${locationType === type ? ' keep-alive-pill--active' : ''}`}
-                    onClick={() => handleLocationTypeChange(type)}
-                    aria-pressed={locationType === type}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ── Install Type (IP Cam only) ──────────────────────────── */}
-          {project === 'CAM' && (
-            <div className="fnhelper-field">
-              <label className="fnhelper-label">Install Type</label>
-              <div className="keep-alive-pills" role="group" aria-label="Install type">
-                {INSTALL_TYPES.map(type => (
-                  <button
-                    key={type}
-                    type="button"
-                    className={`keep-alive-pill${installType === type ? ' keep-alive-pill--active' : ''}`}
-                    onClick={() => handleInstallTypeChange(type)}
-                    aria-pressed={installType === type}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* ── Sequence Number ─────────────────────────────────────── */}
           <div className="fnhelper-field">
