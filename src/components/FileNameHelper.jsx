@@ -7,7 +7,7 @@ const PROJECTS = [
 ];
 
 const SEQUENCE_NUMS    = Array.from({ length: 30 }, (_, i) => String(i + 1).padStart(2, '0')); // '01'–'30'
-const SEQUENCE_LETTERS = ['A', 'B', 'C', 'D', 'INSTALL', 'VIDEO'];
+const SEQUENCE_LETTERS = ['A', 'B', 'C', 'D', '_INSTALL', '_VIDEO'];
 
 // Deduplicate by Loc Code; keep only records that have both a School Name and Loc Code
 const SCHOOLS = (() => {
