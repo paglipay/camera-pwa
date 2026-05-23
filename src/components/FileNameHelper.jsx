@@ -8,6 +8,8 @@ const PROJECTS = [
 
 const LOCATION_TYPES = ['MDF', 'IDF', 'LDF', 'CLDF'];
 const INSTALL_TYPES  = ['INSTALL', 'ENTRANCE'];
+const SEQUENCE_NUMS  = Array.from({ length: 31 }, (_, i) => String(i).padStart(2, '0')); // '00'–'30'
+const SEQUENCE_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 // Deduplicate by Loc Code; keep only records that have both a School Name and Loc Code
 const SCHOOLS = (() => {
@@ -31,6 +33,8 @@ export function FileNameHelper({ onNameChange }) {
   const [project, setProject]               = useState('');
   const [locationType, setLocationType]       = useState('');
   const [installType, setInstallType]         = useState('');
+  const [sequenceNum, setSequenceNum]         = useState('');
+  const [sequenceLetter, setSequenceLetter]   = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const autocompleteRef = useRef(null);
@@ -55,18 +59,20 @@ export function FileNameHelper({ onNameChange }) {
       : schoolInput.trim();
     const projectPart = project
       ? (() => {
-          if (!locationType && !installType) return `${project}01`;
           const parts = [project];
           if (locationType) parts.push(locationType);
           if (installType)  parts.push(installType);
           return parts.join('_');
         })()
       : '';
-    if (!schoolPart && !projectPart) { onNameChange(''); return; }
-    if (!schoolPart)  { onNameChange(projectPart); return; }
-    if (!projectPart) { onNameChange(schoolPart);  return; }
-    onNameChange(`${schoolPart}_${projectPart}`);
-  }, [selectedSchool, schoolInput, project, locationType, installType, onNameChange]);
+    const suffix = sequenceNum + sequenceLetter; // e.g. '01A', '01', 'A', ''
+    const coreParts = [schoolPart, projectPart].filter(Boolean);
+    const coreName  = coreParts.join('_');
+    if (!coreName && !suffix) { onNameChange(''); return; }
+    if (!coreName)  { onNameChange(suffix);   return; }
+    if (!suffix)    { onNameChange(coreName); return; }
+    onNameChange(`${coreName}_${suffix}`);
+  }, [selectedSchool, schoolInput, project, locationType, installType, sequenceNum, sequenceLetter, onNameChange]);
 
   // Close suggestions on outside click
   useEffect(() => {
@@ -110,6 +116,16 @@ export function FileNameHelper({ onNameChange }) {
     setInstallType(prev => (prev === type ? '' : type));
   };
 
+  const handleSequenceNumChange = (num) => {
+    touched.current = true;
+    setSequenceNum(prev => (prev === num ? '' : num));
+  };
+
+  const handleSequenceLetterChange = (letter) => {
+    touched.current = true;
+    setSequenceLetter(prev => (prev === letter ? '' : letter));
+  };
+
   const handleClear = () => {
     touched.current = true;
     setSchoolInput('');
@@ -117,6 +133,8 @@ export function FileNameHelper({ onNameChange }) {
     setProject('');
     setLocationType('');
     setInstallType('');
+    setSequenceNum('');
+    setSequenceLetter('');
     onNameChange('');
   };
 
@@ -230,6 +248,42 @@ export function FileNameHelper({ onNameChange }) {
               </div>
             </div>
           )}
+
+          {/* ── Sequence Number ─────────────────────────────────────── */}
+          <div className="fnhelper-field">
+            <label className="fnhelper-label">Number</label>
+            <div className="keep-alive-pills keep-alive-pills--wrap" role="group" aria-label="Sequence number">
+              {SEQUENCE_NUMS.map(n => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`keep-alive-pill keep-alive-pill--compact${sequenceNum === n ? ' keep-alive-pill--active' : ''}`}
+                  onClick={() => handleSequenceNumChange(n)}
+                  aria-pressed={sequenceNum === n}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Sequence Letter ─────────────────────────────────────── */}
+          <div className="fnhelper-field">
+            <label className="fnhelper-label">Letter</label>
+            <div className="keep-alive-pills" role="group" aria-label="Sequence letter">
+              {SEQUENCE_LETTERS.map(l => (
+                <button
+                  key={l}
+                  type="button"
+                  className={`keep-alive-pill${sequenceLetter === l ? ' keep-alive-pill--active' : ''}`}
+                  onClick={() => handleSequenceLetterChange(l)}
+                  aria-pressed={sequenceLetter === l}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <button type="button" className="fnhelper-clear" onClick={handleClear}>
             Clear

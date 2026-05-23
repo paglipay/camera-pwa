@@ -461,6 +461,28 @@
   color: #fff;
 }
 
+/* Wrapping pill group — used for Number row in FileNameHelper */
+.keep-alive-pills--wrap {
+  flex-wrap: wrap;
+  overflow: visible;
+  border: none;
+  border-radius: 0;
+  gap: 4px;
+}
+
+.keep-alive-pills--wrap .keep-alive-pill {
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+/* Compact pill — smaller padding for dense rows like 00–30 */
+.keep-alive-pill--compact {
+  flex: none;
+  padding: 0.3rem 0.45rem;
+  min-width: 2.4rem;
+  text-align: center;
+}
+
 /* ── Shared spinner ─────────────────────────────────────────────────────── */
 .spinner {
   display: inline-block;
