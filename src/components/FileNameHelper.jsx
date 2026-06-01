@@ -40,7 +40,7 @@ const SCHOOLS = (() => {
 export function FileNameHelper({ onNameChange }) {
   const saved = useMemo(() => loadFnHelperState(), []);
 
-  const [open, setOpen]                     = useState(false);
+  const [open, setOpen]                     = useState(saved.open ?? false);
   const [schoolInput, setSchoolInput]       = useState(saved.schoolInput ?? '');
   const [selectedSchool, setSelectedSchool] = useState(saved.selectedSchool ?? null);
   const [project, setProject]               = useState(saved.project ?? '');
@@ -67,8 +67,8 @@ export function FileNameHelper({ onNameChange }) {
 
   // Persist field state to localStorage whenever it changes
   useEffect(() => {
-    saveFnHelperState({ schoolInput, selectedSchool, project, sequenceNum, sequenceLetter, locCodeOnly });
-  }, [schoolInput, selectedSchool, project, sequenceNum, sequenceLetter, locCodeOnly]);
+    saveFnHelperState({ open, schoolInput, selectedSchool, project, sequenceNum, sequenceLetter, locCodeOnly });
+  }, [open, schoolInput, selectedSchool, project, sequenceNum, sequenceLetter, locCodeOnly]);
 
   // Push concatenated name up whenever fields change (only after user has interacted)
   useEffect(() => {
