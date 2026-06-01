@@ -9,6 +9,19 @@ const PROJECTS = [
 const SEQUENCE_NUMS    = Array.from({ length: 30 }, (_, i) => String(i + 1).padStart(2, '0')); // '01'–'30'
 const SEQUENCE_LETTERS = ['A', 'B', 'C', 'D', '_INSTALL', '_VIDEO'];
 
+const FNHELPER_STATE_KEY = 'camera-pwa:fnhelper-state';
+
+function loadFnHelperState() {
+  try {
+    const raw = localStorage.getItem(FNHELPER_STATE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+function saveFnHelperState(state) {
+  try { localStorage.setItem(FNHELPER_STATE_KEY, JSON.stringify(state)); } catch {}
+}
+
 // Deduplicate by Loc Code; keep only records that have both a School Name and Loc Code
 const SCHOOLS = (() => {
   const seen = new Set();
@@ -25,17 +38,21 @@ const SCHOOLS = (() => {
 })();
 
 export function FileNameHelper({ onNameChange }) {
+  const saved = useMemo(() => loadFnHelperState(), []);
+
   const [open, setOpen]                     = useState(false);
-  const [schoolInput, setSchoolInput]       = useState('');
-  const [selectedSchool, setSelectedSchool] = useState(null); // { site, locCode, schoolName }
-  const [project, setProject]               = useState('');
-  const [sequenceNum, setSequenceNum]         = useState('');
-  const [sequenceLetter, setSequenceLetter]   = useState('');
-  const [locCodeOnly, setLocCodeOnly]         = useState(false);
+  const [schoolInput, setSchoolInput]       = useState(saved.schoolInput ?? '');
+  const [selectedSchool, setSelectedSchool] = useState(saved.selectedSchool ?? null);
+  const [project, setProject]               = useState(saved.project ?? '');
+  const [sequenceNum, setSequenceNum]         = useState(saved.sequenceNum ?? '');
+  const [sequenceLetter, setSequenceLetter]   = useState(saved.sequenceLetter ?? '');
+  const [locCodeOnly, setLocCodeOnly]         = useState(saved.locCodeOnly ?? false);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const autocompleteRef = useRef(null);
-  const touched = useRef(false); // guard against clearing customName on first render
+  // Start as touched if we restored saved state, so the name is pushed up on mount
+  const hasSaved = Boolean(saved.schoolInput || saved.selectedSchool || saved.project || saved.sequenceNum || saved.sequenceLetter);
+  const touched = useRef(hasSaved);
 
   // Filter school list as user types
   const filtered = useMemo(() => {
@@ -47,6 +64,11 @@ export function FileNameHelper({ onNameChange }) {
       String(s.locCode).includes(q)
     );
   }, [schoolInput]);
+
+  // Persist field state to localStorage whenever it changes
+  useEffect(() => {
+    saveFnHelperState({ schoolInput, selectedSchool, project, sequenceNum, sequenceLetter, locCodeOnly });
+  }, [schoolInput, selectedSchool, project, sequenceNum, sequenceLetter, locCodeOnly]);
 
   // Push concatenated name up whenever fields change (only after user has interacted)
   useEffect(() => {
@@ -117,6 +139,7 @@ export function FileNameHelper({ onNameChange }) {
     setSequenceNum('');
     setSequenceLetter('');
     setLocCodeOnly(false);
+    localStorage.removeItem(FNHELPER_STATE_KEY);
     onNameChange('');
   };
 
