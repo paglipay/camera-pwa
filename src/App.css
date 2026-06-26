@@ -461,6 +461,28 @@
   color: #fff;
 }
 
+/* Wrapping pill group — used for Number row in FileNameHelper */
+.keep-alive-pills--wrap {
+  flex-wrap: wrap;
+  overflow: visible;
+  border: none;
+  border-radius: 0;
+  gap: 4px;
+}
+
+.keep-alive-pills--wrap .keep-alive-pill {
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+/* Compact pill — smaller padding for dense rows like 00–30 */
+.keep-alive-pill--compact {
+  flex: none;
+  padding: 0.3rem 0.45rem;
+  min-width: 2.4rem;
+  text-align: center;
+}
+
 /* ── Shared spinner ─────────────────────────────────────────────────────── */
 .spinner {
   display: inline-block;
@@ -580,6 +602,48 @@
   margin: 0;
 }
 
+.fnhelper-num-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+
+.fnhelper-num-pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.fnhelper-page-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+  color: #94a3b8;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.15rem 0.45rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.fnhelper-page-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+.fnhelper-page-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.fnhelper-page-range {
+  font-size: 0.75rem;
+  color: #63b3ed;
+  min-width: 4.5rem;
+  text-align: center;
+}
+
 .fnhelper-clear {
   align-self: flex-start;
   padding: 0.35rem 0.85rem;
@@ -595,6 +659,30 @@
 .fnhelper-clear:hover {
   background: rgba(255, 255, 255, 0.07);
   color: #e2e8f0;
+}
+
+/* Inline toggle row inside FileNameHelper (e.g. Loc code only) */
+.fnhelper-field--row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.fnhelper-toggle-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #94a3b8;
+  flex: 1;
+}
+
+.fnhelper-toggle-hint {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: #4a5568;
 }
 
 /* ── Settings Accordion ─────────────────────────────────────────────────── */
@@ -664,23 +752,61 @@
 }
 
 .reveal-modal {
-  background: #1e2235;
+  position: relative;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 16px;
-  padding: 2.5rem 2rem 2rem;
   max-width: 90vw;
   width: 400px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* ── media background (image or video) ── */
+.reveal-modal-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-color: #111827;
+  /* for <video> */
+  object-fit: cover;
+}
+
+/* dark gradient overlay so text is always readable */
+.reveal-modal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.35) 0%,
+    rgba(0, 0, 0, 0.72) 100%
+  );
+  pointer-events: none;
+}
+
+/* content sits above the bg + overlay */
+.reveal-modal-content {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  text-align: center;
+  padding: 2.5rem 2rem 2rem;
+  min-height: 220px;
+  justify-content: flex-end;
 }
 
 .reveal-modal-label {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.65);
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -689,25 +815,257 @@
 .reveal-modal-filename {
   font-size: 2rem;
   font-weight: 800;
-  color: #e2e8f0;
+  color: #fff;
   margin: 0;
   word-break: break-all;
   line-height: 1.2;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
 .reveal-modal-close {
   margin-top: 0.5rem;
   padding: 0.6rem 2rem;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.45);
   color: #e2e8f0;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
+  backdrop-filter: blur(4px);
 }
 
 .reveal-modal-close:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.65);
+}
+
+/* ── View toggle ────────────────────────────────────────────────────────── */
+.view-toggle {
+  display: flex;
+  justify-content: center;
+  padding: 0.85rem 1rem 0;
+}
+
+.view-toggle-btn {
+  flex: 1;
+  max-width: 140px;
+  padding: 0.45rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.view-toggle-btn:first-child {
+  border-radius: 8px 0 0 8px;
+  border-right: none;
+}
+
+.view-toggle-btn:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+.view-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.11);
+  color: #e2e8f0;
+}
+
+.view-toggle-btn--active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+.view-toggle-btn--active:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+/* ── Webcam Container ────────────────────────────────────────────────────── */
+.webcam-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Two-column layout: video left, controls right */
+.webcam-layout {
+  display: flex;
+  gap: 1.5rem;
+  flex: 1;
+  align-items: flex-start;
+}
+
+.webcam-panel-video {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.webcam-panel-controls {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Narrow screens: stack vertically */
+@media (max-width: 700px) {
+  .webcam-layout {
+    flex-direction: column;
+  }
+  .webcam-panel-controls {
+    width: 100%;
+  }
+}
+
+/* ── Webcam device selector ─────────────────────────────────────────────── */
+.webcam-device-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.webcam-device-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.webcam-device-select {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.07);
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  appearance: auto;
+}
+
+.webcam-device-select:focus {
+  border-color: rgba(99, 179, 237, 0.6);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Webcam preview ─────────────────────────────────────────────────────── */
+.webcam-preview-wrapper {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0f172a;
+  min-height: 180px;
+}
+
+.webcam-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: calc(100dvh - 180px);
+  object-fit: contain;
+  background: #0f172a;
+}
+
+/* ── Recording badge overlay ────────────────────────────────────────────── */
+.webcam-rec-badge {
+  position: absolute;
+  top: 0.65rem;
+  left: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  background: rgba(0, 0, 0, 0.65);
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.06em;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+
+.webcam-rec-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+  animation: rec-pulse 1s ease-in-out infinite;
+}
+
+@keyframes rec-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+/* ── Webcam error state ─────────────────────────────────────────────────── */
+.webcam-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+}
+
+.webcam-error-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fca5a5;
+  margin: 0;
+}
+
+.webcam-error-detail {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* ── Stop recording button variant ─────────────────────────────────────── */
+.btn-capture--stop {
+  background: #dc2626;
+  color: #fff;
+}
+
+.btn-capture--stop:hover {
+  filter: brightness(1.1);
+}
+
+/* ── Disabled capture button ────────────────────────────────────────────── */
+.btn-capture:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* ── Clickable queue thumbnail ──────────────────────────────────────────── */
+.qi-thumb--clickable {
+  cursor: pointer;
+  transition: opacity 0.15s, box-shadow 0.15s;
+}
+
+.qi-thumb--clickable:hover,
+.qi-thumb--clickable:focus-visible {
+  opacity: 0.8;
+  box-shadow: 0 0 0 2px #3b82f6;
+  outline: none;
+  border-radius: 7px;
 }

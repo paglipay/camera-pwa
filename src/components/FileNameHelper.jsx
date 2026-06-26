@@ -6,6 +6,23 @@ const PROJECTS = [
   { label: 'Intrusion Alarm', abbr: 'IA'  },
 ];
 
+const NUMS_PER_PAGE = 30;
+const CLOSET_TYPES   = ['_MDF', '_IDF', '_LDF', '_CLDF'];
+const SEQUENCE_LETTERS = ['A', 'B', 'C', 'D', '_INSTALL', '_VIDEO'];
+
+const FNHELPER_STATE_KEY = 'camera-pwa:fnhelper-state';
+
+function loadFnHelperState() {
+  try {
+    const raw = localStorage.getItem(FNHELPER_STATE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+function saveFnHelperState(state) {
+  try { localStorage.setItem(FNHELPER_STATE_KEY, JSON.stringify(state)); } catch {}
+}
+
 // Deduplicate by Loc Code; keep only records that have both a School Name and Loc Code
 const SCHOOLS = (() => {
   const seen = new Set();
@@ -22,14 +39,23 @@ const SCHOOLS = (() => {
 })();
 
 export function FileNameHelper({ onNameChange }) {
-  const [open, setOpen]                     = useState(false);
-  const [schoolInput, setSchoolInput]       = useState('');
-  const [selectedSchool, setSelectedSchool] = useState(null); // { site, locCode, schoolName }
-  const [project, setProject]               = useState('');
+  const saved = useMemo(() => loadFnHelperState(), []);
+
+  const [open, setOpen]                     = useState(saved.open ?? false);
+  const [schoolInput, setSchoolInput]       = useState(saved.schoolInput ?? '');
+  const [selectedSchool, setSelectedSchool] = useState(saved.selectedSchool ?? null);
+  const [project, setProject]               = useState(saved.project ?? '');
+  const [sequenceNum, setSequenceNum]         = useState(saved.sequenceNum ?? '');
+  const [sequenceLetter, setSequenceLetter]   = useState(saved.sequenceLetter ?? '');
+  const [locCodeOnly, setLocCodeOnly]         = useState(saved.locCodeOnly ?? false);
+  const [closetType, setClosetType]           = useState(saved.closetType ?? '');
+  const [numPage, setNumPage]                 = useState(saved.numPage ?? 0);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const autocompleteRef = useRef(null);
-  const touched = useRef(false); // guard against clearing customName on first render
+  // Start as touched if we restored saved state, so the name is pushed up on mount
+  const hasSaved = Boolean(saved.schoolInput || saved.selectedSchool || saved.project || saved.closetType || saved.sequenceNum || saved.sequenceLetter);
+  const touched = useRef(hasSaved);
 
   // Filter school list as user types
   const filtered = useMemo(() => {
@@ -42,18 +68,26 @@ export function FileNameHelper({ onNameChange }) {
     );
   }, [schoolInput]);
 
+  // Persist field state to localStorage whenever it changes
+  useEffect(() => {
+    saveFnHelperState({ open, schoolInput, selectedSchool, project, closetType, sequenceNum, sequenceLetter, locCodeOnly, numPage });
+  }, [open, schoolInput, selectedSchool, project, closetType, sequenceNum, sequenceLetter, locCodeOnly, numPage]);
+
   // Push concatenated name up whenever fields change (only after user has interacted)
   useEffect(() => {
     if (!touched.current) return;
     const schoolPart = selectedSchool
-      ? `${selectedSchool.site}-${selectedSchool.locCode}`
+      ? (locCodeOnly ? `${selectedSchool.locCode}` : `${selectedSchool.site}-${selectedSchool.locCode}`)
       : schoolInput.trim();
-    const projectPart = project ? `${project}01` : '';
-    if (!schoolPart && !projectPart) { onNameChange(''); return; }
-    if (!schoolPart)  { onNameChange(projectPart); return; }
-    if (!projectPart) { onNameChange(schoolPart);  return; }
-    onNameChange(`${schoolPart}_${projectPart}`);
-  }, [selectedSchool, schoolInput, project, onNameChange]);
+    const projectPart = project || '';
+    const suffix = closetType + sequenceNum + sequenceLetter; // e.g. '_MDF01A', '_MDF', '01A', ''
+    const coreParts = [schoolPart, projectPart].filter(Boolean);
+    const coreName  = coreParts.join('_');
+    if (!coreName && !suffix) { onNameChange(''); return; }
+    if (!coreName)  { onNameChange(suffix);   return; }
+    if (!suffix)    { onNameChange(coreName); return; }
+    onNameChange(`${coreName}${suffix}`);
+  }, [selectedSchool, schoolInput, project, closetType, sequenceNum, sequenceLetter, locCodeOnly, onNameChange]);
 
   // Close suggestions on outside click
   useEffect(() => {
@@ -85,11 +119,36 @@ export function FileNameHelper({ onNameChange }) {
     setProject(prev => (prev === abbr ? '' : abbr));
   };
 
+  const handleSequenceNumChange = (num) => {
+    touched.current = true;
+    setSequenceNum(prev => (prev === num ? '' : num));
+  };
+
+  const handleClosetTypeChange = (type) => {
+    touched.current = true;
+    setClosetType(prev => (prev === type ? '' : type));
+  };
+
+  const handleSequenceLetterChange = (letter) => {
+    touched.current = true;
+    setSequenceLetter(prev => (prev === letter ? '' : letter));
+  };
+
+  const handleLocCodeOnlyChange = () => {
+    touched.current = true;
+    setLocCodeOnly(prev => !prev);
+  };
+
   const handleClear = () => {
     touched.current = true;
     setSchoolInput('');
     setSelectedSchool(null);
     setProject('');
+    setClosetType('');
+    setSequenceNum('');
+    setSequenceLetter('');
+    setLocCodeOnly(false);
+    localStorage.removeItem(FNHELPER_STATE_KEY);
     onNameChange('');
   };
 
@@ -146,6 +205,23 @@ export function FileNameHelper({ onNameChange }) {
             )}
           </div>
 
+          {/* ── Loc code only toggle ────────────────────────────────── */}
+          <div className="fnhelper-field fnhelper-field--row">
+            <label className="fnhelper-toggle-label" htmlFor="fnhelper-loccode-only">
+              Loc code only
+              <span className="fnhelper-toggle-hint">Omit site prefix — use loc code only (e.g. 9545)</span>
+            </label>
+            <button
+              id="fnhelper-loccode-only"
+              type="button"
+              role="switch"
+              aria-checked={locCodeOnly}
+              className={`toggle-switch${locCodeOnly ? ' toggle-switch--on' : ''}`}
+              onClick={handleLocCodeOnlyChange}
+              aria-label="Use loc code only"
+            />
+          </div>
+
           {/* ── Project ────────────────────────────────────────────── */}
           <div className="fnhelper-field">
             <label className="fnhelper-label">Project</label>
@@ -159,6 +235,80 @@ export function FileNameHelper({ onNameChange }) {
                   aria-pressed={project === p.abbr}
                 >
                   {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Closet ─────────────────────────────────────────────── */}
+          <div className="fnhelper-field">
+            <label className="fnhelper-label">Closet</label>
+            <div className="keep-alive-pills" role="group" aria-label="Closet type">
+              {CLOSET_TYPES.map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  className={`keep-alive-pill${closetType === t ? ' keep-alive-pill--active' : ''}`}
+                  onClick={() => handleClosetTypeChange(t)}
+                  aria-pressed={closetType === t}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Sequence Number ─────────────────────────────────────── */}
+          <div className="fnhelper-field">
+            <div className="fnhelper-num-header">
+              <label className="fnhelper-label">Number</label>
+              <div className="fnhelper-num-pagination">
+                <button
+                  type="button"
+                  className="fnhelper-page-btn"
+                  onClick={() => setNumPage(p => Math.max(0, p - 1))}
+                  disabled={numPage === 0}
+                  aria-label="Previous page"
+                >‹</button>
+                <span className="fnhelper-page-range">
+                  {String(numPage * NUMS_PER_PAGE + 1).padStart(2, '0')}–{String(numPage * NUMS_PER_PAGE + NUMS_PER_PAGE).padStart(2, '0')}
+                </span>
+                <button
+                  type="button"
+                  className="fnhelper-page-btn"
+                  onClick={() => setNumPage(p => p + 1)}
+                  aria-label="Next page"
+                >›</button>
+              </div>
+            </div>
+            <div className="keep-alive-pills keep-alive-pills--wrap" role="group" aria-label="Sequence number">
+              {Array.from({ length: NUMS_PER_PAGE }, (_, i) => String(numPage * NUMS_PER_PAGE + i + 1).padStart(2, '0')).map(n => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`keep-alive-pill keep-alive-pill--compact${sequenceNum === n ? ' keep-alive-pill--active' : ''}`}
+                  onClick={() => handleSequenceNumChange(n)}
+                  aria-pressed={sequenceNum === n}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Sequence Letter ─────────────────────────────────────── */}
+          <div className="fnhelper-field">
+            <label className="fnhelper-label">Letter</label>
+            <div className="keep-alive-pills" role="group" aria-label="Sequence letter">
+              {SEQUENCE_LETTERS.map(l => (
+                <button
+                  key={l}
+                  type="button"
+                  className={`keep-alive-pill${sequenceLetter === l ? ' keep-alive-pill--active' : ''}`}
+                  onClick={() => handleSequenceLetterChange(l)}
+                  aria-pressed={sequenceLetter === l}
+                >
+                  {l}
                 </button>
               ))}
             </div>
