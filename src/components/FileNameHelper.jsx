@@ -7,6 +7,7 @@ const PROJECTS = [
 ];
 
 const NUMS_PER_PAGE = 30;
+const CLOSET_TYPES   = ['_MDF', '_IDF', '_LDF', '_CLDF'];
 const SEQUENCE_LETTERS = ['A', 'B', 'C', 'D', '_INSTALL', '_VIDEO'];
 
 const FNHELPER_STATE_KEY = 'camera-pwa:fnhelper-state';
@@ -47,12 +48,13 @@ export function FileNameHelper({ onNameChange }) {
   const [sequenceNum, setSequenceNum]         = useState(saved.sequenceNum ?? '');
   const [sequenceLetter, setSequenceLetter]   = useState(saved.sequenceLetter ?? '');
   const [locCodeOnly, setLocCodeOnly]         = useState(saved.locCodeOnly ?? false);
+  const [closetType, setClosetType]           = useState(saved.closetType ?? '');
   const [numPage, setNumPage]                 = useState(saved.numPage ?? 0);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const autocompleteRef = useRef(null);
   // Start as touched if we restored saved state, so the name is pushed up on mount
-  const hasSaved = Boolean(saved.schoolInput || saved.selectedSchool || saved.project || saved.sequenceNum || saved.sequenceLetter);
+  const hasSaved = Boolean(saved.schoolInput || saved.selectedSchool || saved.project || saved.closetType || saved.sequenceNum || saved.sequenceLetter);
   const touched = useRef(hasSaved);
 
   // Filter school list as user types
@@ -68,8 +70,8 @@ export function FileNameHelper({ onNameChange }) {
 
   // Persist field state to localStorage whenever it changes
   useEffect(() => {
-    saveFnHelperState({ open, schoolInput, selectedSchool, project, sequenceNum, sequenceLetter, locCodeOnly, numPage });
-  }, [open, schoolInput, selectedSchool, project, sequenceNum, sequenceLetter, locCodeOnly, numPage]);
+    saveFnHelperState({ open, schoolInput, selectedSchool, project, closetType, sequenceNum, sequenceLetter, locCodeOnly, numPage });
+  }, [open, schoolInput, selectedSchool, project, closetType, sequenceNum, sequenceLetter, locCodeOnly, numPage]);
 
   // Push concatenated name up whenever fields change (only after user has interacted)
   useEffect(() => {
@@ -78,14 +80,14 @@ export function FileNameHelper({ onNameChange }) {
       ? (locCodeOnly ? `${selectedSchool.locCode}` : `${selectedSchool.site}-${selectedSchool.locCode}`)
       : schoolInput.trim();
     const projectPart = project || '';
-    const suffix = sequenceNum + sequenceLetter; // e.g. '01A', '01', 'A', ''
+    const suffix = closetType + sequenceNum + sequenceLetter; // e.g. '_MDF01A', '_MDF', '01A', ''
     const coreParts = [schoolPart, projectPart].filter(Boolean);
     const coreName  = coreParts.join('_');
     if (!coreName && !suffix) { onNameChange(''); return; }
     if (!coreName)  { onNameChange(suffix);   return; }
     if (!suffix)    { onNameChange(coreName); return; }
     onNameChange(`${coreName}${suffix}`);
-  }, [selectedSchool, schoolInput, project, sequenceNum, sequenceLetter, locCodeOnly, onNameChange]);
+  }, [selectedSchool, schoolInput, project, closetType, sequenceNum, sequenceLetter, locCodeOnly, onNameChange]);
 
   // Close suggestions on outside click
   useEffect(() => {
@@ -122,6 +124,11 @@ export function FileNameHelper({ onNameChange }) {
     setSequenceNum(prev => (prev === num ? '' : num));
   };
 
+  const handleClosetTypeChange = (type) => {
+    touched.current = true;
+    setClosetType(prev => (prev === type ? '' : type));
+  };
+
   const handleSequenceLetterChange = (letter) => {
     touched.current = true;
     setSequenceLetter(prev => (prev === letter ? '' : letter));
@@ -137,6 +144,7 @@ export function FileNameHelper({ onNameChange }) {
     setSchoolInput('');
     setSelectedSchool(null);
     setProject('');
+    setClosetType('');
     setSequenceNum('');
     setSequenceLetter('');
     setLocCodeOnly(false);
@@ -227,6 +235,24 @@ export function FileNameHelper({ onNameChange }) {
                   aria-pressed={project === p.abbr}
                 >
                   {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Closet ─────────────────────────────────────────────── */}
+          <div className="fnhelper-field">
+            <label className="fnhelper-label">Closet</label>
+            <div className="keep-alive-pills" role="group" aria-label="Closet type">
+              {CLOSET_TYPES.map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  className={`keep-alive-pill${closetType === t ? ' keep-alive-pill--active' : ''}`}
+                  onClick={() => handleClosetTypeChange(t)}
+                  aria-pressed={closetType === t}
+                >
+                  {t}
                 </button>
               ))}
             </div>
