@@ -602,6 +602,48 @@
   margin: 0;
 }
 
+.fnhelper-num-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+
+.fnhelper-num-pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.fnhelper-page-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+  color: #94a3b8;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.15rem 0.45rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.fnhelper-page-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+.fnhelper-page-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.fnhelper-page-range {
+  font-size: 0.75rem;
+  color: #63b3ed;
+  min-width: 4.5rem;
+  text-align: center;
+}
+
 .fnhelper-clear {
   align-self: flex-start;
   padding: 0.35rem 0.85rem;

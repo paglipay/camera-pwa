@@ -6,7 +6,7 @@ const PROJECTS = [
   { label: 'Intrusion Alarm', abbr: 'IA'  },
 ];
 
-const SEQUENCE_NUMS    = Array.from({ length: 30 }, (_, i) => String(i + 1).padStart(2, '0')); // '01'–'30'
+const NUMS_PER_PAGE = 30;
 const SEQUENCE_LETTERS = ['A', 'B', 'C', 'D', '_INSTALL', '_VIDEO'];
 
 const FNHELPER_STATE_KEY = 'camera-pwa:fnhelper-state';
@@ -47,6 +47,7 @@ export function FileNameHelper({ onNameChange }) {
   const [sequenceNum, setSequenceNum]         = useState(saved.sequenceNum ?? '');
   const [sequenceLetter, setSequenceLetter]   = useState(saved.sequenceLetter ?? '');
   const [locCodeOnly, setLocCodeOnly]         = useState(saved.locCodeOnly ?? false);
+  const [numPage, setNumPage]                 = useState(saved.numPage ?? 0);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const autocompleteRef = useRef(null);
@@ -67,8 +68,8 @@ export function FileNameHelper({ onNameChange }) {
 
   // Persist field state to localStorage whenever it changes
   useEffect(() => {
-    saveFnHelperState({ open, schoolInput, selectedSchool, project, sequenceNum, sequenceLetter, locCodeOnly });
-  }, [open, schoolInput, selectedSchool, project, sequenceNum, sequenceLetter, locCodeOnly]);
+    saveFnHelperState({ open, schoolInput, selectedSchool, project, sequenceNum, sequenceLetter, locCodeOnly, numPage });
+  }, [open, schoolInput, selectedSchool, project, sequenceNum, sequenceLetter, locCodeOnly, numPage]);
 
   // Push concatenated name up whenever fields change (only after user has interacted)
   useEffect(() => {
@@ -233,9 +234,29 @@ export function FileNameHelper({ onNameChange }) {
 
           {/* ── Sequence Number ─────────────────────────────────────── */}
           <div className="fnhelper-field">
-            <label className="fnhelper-label">Number</label>
+            <div className="fnhelper-num-header">
+              <label className="fnhelper-label">Number</label>
+              <div className="fnhelper-num-pagination">
+                <button
+                  type="button"
+                  className="fnhelper-page-btn"
+                  onClick={() => setNumPage(p => Math.max(0, p - 1))}
+                  disabled={numPage === 0}
+                  aria-label="Previous page"
+                >‹</button>
+                <span className="fnhelper-page-range">
+                  {String(numPage * NUMS_PER_PAGE + 1).padStart(2, '0')}–{String(numPage * NUMS_PER_PAGE + NUMS_PER_PAGE).padStart(2, '0')}
+                </span>
+                <button
+                  type="button"
+                  className="fnhelper-page-btn"
+                  onClick={() => setNumPage(p => p + 1)}
+                  aria-label="Next page"
+                >›</button>
+              </div>
+            </div>
             <div className="keep-alive-pills keep-alive-pills--wrap" role="group" aria-label="Sequence number">
-              {SEQUENCE_NUMS.map(n => (
+              {Array.from({ length: NUMS_PER_PAGE }, (_, i) => String(numPage * NUMS_PER_PAGE + i + 1).padStart(2, '0')).map(n => (
                 <button
                   key={n}
                   type="button"
