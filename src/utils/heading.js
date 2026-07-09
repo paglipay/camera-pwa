@@ -1,4 +1,31 @@
 /**
+ * Tilt-compensated compass heading from raw alpha/beta/gamma (degrees).
+ * Naively using `360 - alpha` only works when the device is lying flat;
+ * held upright to frame a photo (the normal case), alpha alone no longer
+ * tracks compass heading, so this folds in the device's full 3D tilt.
+ * Standard formula — see e.g. https://www.w3.org/TR/orientation-event/.
+ */
+function computeTiltCompensatedHeading(alpha, beta, gamma) {
+  const degToRad = Math.PI / 180;
+  const z = alpha * degToRad;
+  const x = beta  * degToRad;
+  const y = gamma * degToRad;
+
+  const cZ = Math.cos(z), sZ = Math.sin(z);
+  const cY = Math.cos(y), sY = Math.sin(y);
+  const sX = Math.sin(x);
+
+  const Vx = -cZ * sY - sZ * sX * cY;
+  const Vy = -sZ * sY + cZ * sX * cY;
+
+  let heading = Math.atan(Vx / Vy);
+  if (Vy < 0) heading += Math.PI;
+  else if (Vx < 0) heading += 2 * Math.PI;
+
+  return heading * (180 / Math.PI);
+}
+
+/**
  * Resolve with a compass heading in degrees (0-360), or null within `timeoutMs`.
  * Never throws — degrades gracefully like getCoords() on timeout/denial.
  *
@@ -42,11 +69,22 @@ export async function getHeading(timeoutMs = 3000) {
     const handler = (event) => {
       let heading = null;
       if (typeof event.webkitCompassHeading === 'number') {
-        // iOS Safari — already relative to true north
+        // iOS Safari — already tilt- and screen-orientation-compensated, relative to true north
         heading = event.webkitCompassHeading;
-      } else if (event.absolute && typeof event.alpha === 'number') {
-        // Android/Chrome — alpha increases counter-clockwise, compass heading increases clockwise
-        heading = 360 - event.alpha;
+      } else if (
+        event.absolute &&
+        typeof event.alpha === 'number' &&
+        typeof event.beta === 'number' &&
+        typeof event.gamma === 'number'
+      ) {
+        // Android/Chrome — alpha/beta/gamma are relative to the device's physical
+        // frame, not the (possibly rotated) CSS viewport, so correct for screen
+        // rotation before tilt-compensating. Sign/rotation convention here is
+        // the commonly-cited one; verify against a real compass if a landscape
+        // capture still reads off.
+        const screenAngle = window.screen?.orientation?.angle ?? window.orientation ?? 0;
+        const adjustedAlpha = ((event.alpha + screenAngle) % 360 + 360) % 360;
+        heading = computeTiltCompensatedHeading(adjustedAlpha, event.beta, event.gamma);
       }
       if (heading == null || Number.isNaN(heading)) return;
       finish(((heading % 360) + 360) % 360);
