@@ -1,5 +1,6 @@
 import { useRef, useCallback, useState, useEffect } from 'react';
 import { FileNameHelper } from './FileNameHelper';
+import { getHeading } from '../utils/heading';
 
 // ── Helpers shared with Camera.jsx (same localStorage keys) ─────────────────
 
@@ -192,7 +193,7 @@ export function WebcamCapture({ onCapture, exifMode }) {
     canvas.height   = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
 
-    const coords = await getCoords();
+    const [coords, heading] = await Promise.all([getCoords(), getHeading()]);
 
     canvas.toBlob(async (blob) => {
       if (!blob) return;
@@ -202,7 +203,7 @@ export function WebcamCapture({ onCapture, exifMode }) {
       const finalName    = resolvedName ? resolvedName + ext : `webcam-${Date.now()}${ext}`;
       const file         = new File([blob], finalName, { type: 'image/jpeg' });
       if (exifMode) await saveLocally(file);
-      onCapture(file, finalName, coords);
+      onCapture(file, finalName, coords, heading);
     }, 'image/jpeg', 0.92);
   }, [isReady, customName, exifMode, getNextName, saveLocally, onCapture]);
 
@@ -233,13 +234,13 @@ export function WebcamCapture({ onCapture, exifMode }) {
         chunksRef.current = [];
 
         const ext          = usedMime.includes('mp4') ? '.mp4' : '.webm';
-        const coords       = await getCoords();
+        const [coords, heading] = await Promise.all([getCoords(), getHeading()]);
         const baseName     = customName.trim();
         const resolvedName = getNextName(baseName, ext);
         const finalName    = resolvedName ? resolvedName + ext : `webcam-${Date.now()}${ext}`;
         const file         = new File([blob], finalName, { type: usedMime });
         if (exifMode) await saveLocally(file);
-        onCapture(file, finalName, coords);
+        onCapture(file, finalName, coords, heading);
       };
 
       recorder.start();

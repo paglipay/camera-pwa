@@ -76,8 +76,8 @@ export default function App() {
     });
   }, []);
 
-  const handleCapture = useCallback((file, fileName, coords) => {
-    addImage(file, fileName, coords);
+  const handleCapture = useCallback((file, fileName, coords, heading) => {
+    addImage(file, fileName, coords, heading);
     if (showFilenameAfterCapture) {
       const blobUrl = URL.createObjectURL(file);
       setRevealData({ fileName, blobUrl, isVideo: file.type.startsWith('video/') });

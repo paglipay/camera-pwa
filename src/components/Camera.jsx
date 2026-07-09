@@ -1,5 +1,6 @@
 import { useRef, useCallback, useState } from 'react';
 import { FileNameHelper } from './FileNameHelper';
+import { getHeading } from '../utils/heading';
 
 const SKIP_NAMING_MODAL_KEY = 'camera-pwa:skip-naming-modal';
 
@@ -88,7 +89,7 @@ export function Camera({ onCapture, exifMode }) {
   }, []);
 
   // Naming modal state
-  const [pendingCapture, setPendingCapture] = useState(null); // { file, coords, ext }
+  const [pendingCapture, setPendingCapture] = useState(null); // { file, coords, heading, ext }
   const [modalName, setModalName]           = useState('');
   const [modalDontShow, setModalDontShow]   = useState(false);
 
@@ -116,7 +117,7 @@ export function Camera({ onCapture, exifMode }) {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = '';
-    const coords = await getCoords();
+    const [coords, heading] = await Promise.all([getCoords(), getHeading()]);
     const ext = file.name.includes('.')
       ? '.' + file.name.split('.').pop()
       : '';
@@ -124,7 +125,7 @@ export function Camera({ onCapture, exifMode }) {
 
     // If no name provided and user hasn't opted out of the naming modal, show it
     if (!baseName && localStorage.getItem(SKIP_NAMING_MODAL_KEY) !== 'true') {
-      setPendingCapture({ file, coords, ext });
+      setPendingCapture({ file, coords, heading, ext });
       setModalName('');
       setModalDontShow(false);
       return;
@@ -134,18 +135,18 @@ export function Camera({ onCapture, exifMode }) {
     const finalName  = resolvedName ? resolvedName + ext : file.name;
     const namedFile  = new File([file], finalName, { type: file.type });
     if (exifMode) await saveLocally(namedFile);
-    onCapture(namedFile, finalName, coords);
+    onCapture(namedFile, finalName, coords, heading);
   }, [customName, exifMode, getNextName, onCapture, saveLocally]);
 
   const commitCapture = useCallback(async (name) => {
     if (!pendingCapture) return;
-    const { file, coords, ext } = pendingCapture;
+    const { file, coords, heading, ext } = pendingCapture;
     const resolvedName = getNextName(name.trim(), ext);
     const finalName = resolvedName ? resolvedName + ext : file.name;
     const namedFile = new File([file], finalName, { type: file.type });
     setPendingCapture(null);
     if (exifMode) await saveLocally(namedFile);
-    onCapture(namedFile, finalName, coords);
+    onCapture(namedFile, finalName, coords, heading);
   }, [pendingCapture, exifMode, getNextName, onCapture, saveLocally]);
 
   const handleModalName = useCallback(() => {
