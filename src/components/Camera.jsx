@@ -1,6 +1,6 @@
 import { useRef, useCallback, useState } from 'react';
 import { FileNameHelper } from './FileNameHelper';
-import { getHeading } from '../utils/heading';
+import { getHeading, applyHeadingOffset } from '../utils/heading';
 
 const SKIP_NAMING_MODAL_KEY = 'camera-pwa:skip-naming-modal';
 
@@ -33,7 +33,7 @@ function getCoords(timeoutMs = 8000) {
   });
 }
 
-export function Camera({ onCapture, exifMode }) {
+export function Camera({ onCapture, exifMode, headingOffset }) {
   const cameraInputRef  = useRef(null);
   const videoInputRef   = useRef(null);
   const galleryInputRef = useRef(null);
@@ -117,7 +117,8 @@ export function Camera({ onCapture, exifMode }) {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = '';
-    const [coords, heading] = await Promise.all([getCoords(), getHeading()]);
+    const [coords, rawHeading] = await Promise.all([getCoords(), getHeading()]);
+    const heading = applyHeadingOffset(rawHeading, headingOffset);
     const ext = file.name.includes('.')
       ? '.' + file.name.split('.').pop()
       : '';
@@ -136,7 +137,7 @@ export function Camera({ onCapture, exifMode }) {
     const namedFile  = new File([file], finalName, { type: file.type });
     if (exifMode) await saveLocally(namedFile);
     onCapture(namedFile, finalName, coords, heading);
-  }, [customName, exifMode, getNextName, onCapture, saveLocally]);
+  }, [customName, exifMode, headingOffset, getNextName, onCapture, saveLocally]);
 
   const commitCapture = useCallback(async (name) => {
     if (!pendingCapture) return;

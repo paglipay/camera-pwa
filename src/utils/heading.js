@@ -1,4 +1,16 @@
 /**
+ * Apply a manual calibration offset (degrees) to a heading, wrapping into 0-360.
+ * Sensor bias, magnetic declination, or per-device quirks can leave the raw
+ * reading consistently off by a fixed amount — this lets a user-set offset
+ * correct for that. `heading` may be null (unavailable), in which case it
+ * passes through unchanged.
+ */
+export function applyHeadingOffset(heading, offsetDegrees = 0) {
+  if (heading == null || !offsetDegrees) return heading;
+  return ((heading + offsetDegrees) % 360 + 360) % 360;
+}
+
+/**
  * Tilt-compensated compass heading from raw alpha/beta/gamma (degrees).
  * Naively using `360 - alpha` only works when the device is lying flat;
  * held upright to frame a photo (the normal case), alpha alone no longer

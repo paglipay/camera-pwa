@@ -1,6 +1,6 @@
 import { useRef, useCallback, useState, useEffect } from 'react';
 import { FileNameHelper } from './FileNameHelper';
-import { getHeading } from '../utils/heading';
+import { getHeading, applyHeadingOffset } from '../utils/heading';
 
 // ── Helpers shared with Camera.jsx (same localStorage keys) ─────────────────
 
@@ -54,7 +54,7 @@ function formatTime(secs) {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export function WebcamCapture({ onCapture, exifMode }) {
+export function WebcamCapture({ onCapture, exifMode, headingOffset }) {
   const videoRef    = useRef(null);
   const streamRef   = useRef(null);
   const recorderRef = useRef(null);
@@ -193,7 +193,8 @@ export function WebcamCapture({ onCapture, exifMode }) {
     canvas.height   = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
 
-    const [coords, heading] = await Promise.all([getCoords(), getHeading()]);
+    const [coords, rawHeading] = await Promise.all([getCoords(), getHeading()]);
+    const heading = applyHeadingOffset(rawHeading, headingOffset);
 
     canvas.toBlob(async (blob) => {
       if (!blob) return;
@@ -205,7 +206,7 @@ export function WebcamCapture({ onCapture, exifMode }) {
       if (exifMode) await saveLocally(file);
       onCapture(file, finalName, coords, heading);
     }, 'image/jpeg', 0.92);
-  }, [isReady, customName, exifMode, getNextName, saveLocally, onCapture]);
+  }, [isReady, customName, exifMode, headingOffset, getNextName, saveLocally, onCapture]);
 
   // ── Video recording ──────────────────────────────────────────────────────
 
@@ -234,7 +235,8 @@ export function WebcamCapture({ onCapture, exifMode }) {
         chunksRef.current = [];
 
         const ext          = usedMime.includes('mp4') ? '.mp4' : '.webm';
-        const [coords, heading] = await Promise.all([getCoords(), getHeading()]);
+        const [coords, rawHeading] = await Promise.all([getCoords(), getHeading()]);
+        const heading      = applyHeadingOffset(rawHeading, headingOffset);
         const baseName     = customName.trim();
         const resolvedName = getNextName(baseName, ext);
         const finalName    = resolvedName ? resolvedName + ext : `webcam-${Date.now()}${ext}`;
@@ -247,7 +249,7 @@ export function WebcamCapture({ onCapture, exifMode }) {
       recorderRef.current = recorder;
       setIsRecording(true);
     }
-  }, [isRecording, customName, exifMode, getNextName, saveLocally, onCapture]);
+  }, [isRecording, customName, exifMode, headingOffset, getNextName, saveLocally, onCapture]);
 
   // ── Render ───────────────────────────────────────────────────────────────
 

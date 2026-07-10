@@ -66,6 +66,15 @@ export default function App() {
     return next;
   });
 
+  // ── Manual heading calibration offset ─────────────────────────────────────
+  const [headingOffset, setHeadingOffset] = useState(
+    () => Number(localStorage.getItem('camera-pwa:heading-offset')) || 0
+  );
+  const handleHeadingOffsetChange = (val) => {
+    setHeadingOffset(val);
+    localStorage.setItem('camera-pwa:heading-offset', String(val));
+  };
+
   // ── Filename reveal modal ─────────────────────────────────────────────────
   const [revealData, setRevealData] = useState(null); // { fileName, blobUrl, isVideo }
 
