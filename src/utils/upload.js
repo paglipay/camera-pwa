@@ -17,7 +17,8 @@ export async function uploadImage(item) {
   if (FOLDER) body.append('folder', FOLDER);
   if (item.lat != null) body.append('lat', String(item.lat));
   if (item.lon != null) body.append('lon', String(item.lon));
-  console.log('[upload] coordinates →', { lat: item.lat ?? 'none', lon: item.lon ?? 'none' });
+  if (item.heading != null) body.append('heading', String(item.heading));
+  console.log('[upload] coordinates →', { lat: item.lat ?? 'none', lon: item.lon ?? 'none', heading: item.heading ?? 'none' });
 
   const headers = {};
   if (API_KEY) headers['X-API-Key'] = API_KEY;

@@ -7,7 +7,7 @@ const PROJECTS = [
 ];
 
 const NUMS_PER_PAGE = 30;
-const CLOSET_TYPES   = ['_MDF', '_IDF', '_LDF', '_CLDF'];
+const CLOSET_TYPES   = ['_MDF10', '_IDF20', '_LDF30', '_CLDF40'];
 const SEQUENCE_LETTERS = ['A', 'B', 'C', 'D', '_INSTALL', '_VIDEO'];
 
 const FNHELPER_STATE_KEY = 'camera-pwa:fnhelper-state';

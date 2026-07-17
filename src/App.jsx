@@ -66,6 +66,15 @@ export default function App() {
     return next;
   });
 
+  // ── Manual heading calibration offset ─────────────────────────────────────
+  const [headingOffset, setHeadingOffset] = useState(
+    () => Number(localStorage.getItem('camera-pwa:heading-offset')) || 0
+  );
+  const handleHeadingOffsetChange = (val) => {
+    setHeadingOffset(val);
+    localStorage.setItem('camera-pwa:heading-offset', String(val));
+  };
+
   // ── Filename reveal modal ─────────────────────────────────────────────────
   const [revealData, setRevealData] = useState(null); // { fileName, blobUrl, isVideo }
 
@@ -76,8 +85,8 @@ export default function App() {
     });
   }, []);
 
-  const handleCapture = useCallback((file, fileName, coords) => {
-    addImage(file, fileName, coords);
+  const handleCapture = useCallback((file, fileName, coords, heading) => {
+    addImage(file, fileName, coords, heading);
     if (showFilenameAfterCapture) {
       const blobUrl = URL.createObjectURL(file);
       setRevealData({ fileName, blobUrl, isVideo: file.type.startsWith('video/') });
@@ -175,8 +184,8 @@ export default function App() {
         </div>
 
         {view === 'mobile'
-          ? <Camera onCapture={handleCapture} exifMode={exifMode} />
-          : <WebcamCapture onCapture={handleCapture} exifMode={exifMode} />
+          ? <Camera onCapture={handleCapture} exifMode={exifMode} headingOffset={headingOffset} />
+          : <WebcamCapture onCapture={handleCapture} exifMode={exifMode} headingOffset={headingOffset} />
         }
 
         {/* ── Settings accordion ── */}
@@ -246,7 +255,7 @@ export default function App() {
               </div>
 
               {/* Show filename after capture */}
-              <div className="exif-toggle-row" style={{ borderBottom: 'none', marginBottom: 0 }}>
+              <div className="exif-toggle-row">
                 <label className="exif-toggle-label" htmlFor="show-filename-toggle">
                   <span className="exif-toggle-text">Show filename after capture</span>
                   <span className="exif-toggle-hint">Displays the saved filename after every capture, record, or gallery pick.</span>
@@ -258,6 +267,28 @@ export default function App() {
                   className={`toggle-switch${showFilenameAfterCapture ? ' toggle-switch--on' : ''}`}
                   onClick={toggleShowFilename}
                   aria-label="Toggle show filename after capture"
+                />
+              </div>
+
+              {/* Heading calibration offset */}
+              <div className="exif-toggle-row" style={{ borderBottom: 'none', marginBottom: 0 }}>
+                <label className="exif-toggle-label" htmlFor="heading-offset-input">
+                  <span className="exif-toggle-text">Heading calibration offset</span>
+                  <span className="exif-toggle-hint">
+                    Degrees added to the compass reading. If a known-north shot reads e.g. 242°,
+                    set this to -242 (or 118) to correct it.
+                  </span>
+                </label>
+                <input
+                  id="heading-offset-input"
+                  type="number"
+                  className="filename-input"
+                  style={{ maxWidth: '90px', flex: 'none' }}
+                  value={headingOffset}
+                  onChange={e => handleHeadingOffsetChange(Number(e.target.value))}
+                  step="1"
+                  min="-360"
+                  max="360"
                 />
               </div>
 
